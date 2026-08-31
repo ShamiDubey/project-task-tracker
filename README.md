@@ -45,7 +45,7 @@ git clone <this repo>
 cd takehome-01-project-task-tracker
 npm install
 
-cp .env.example .env.local
+cp .env.example .env
 # Fill in DATABASE_URL from the Neon console and
 # AUTH_SECRET from: openssl rand -base64 32
 

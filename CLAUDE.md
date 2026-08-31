@@ -43,7 +43,7 @@ Rationale for each of these belongs in `docs/decisions.md` and the `SUBMISSION.m
 ├── CLAUDE.md                 # this file
 ├── HEART.md                  # the requirement spec + progress log
 ├── SUBMISSION.md             # the first file the reviewer opens
-├── .env.local                # NEVER committed
+├── .env                # NEVER committed
 ├── .env.example              # committed, placeholder values only
 ├── drizzle.config.ts
 ├── drizzle/                  # generated SQL migrations — committed
@@ -119,20 +119,34 @@ Rationale for each of these belongs in `docs/decisions.md` and the `SUBMISSION.m
     stored date still equals the task's current due date. This is what makes "the alert comes back"
     fall out for free — no cron, no cleanup job. Do not implement it any other way.
 
-### 4.6 Secrets and git
-15. **Never commit `.env`, `.env.local`, a Neon connection string, a JWT secret, or a password.**
-    `.env.example` holds placeholders only. Before every push: `git grep -nEi 'postgres://|neon\.tech|SECRET='`.
-16. **Commit after every meaningful step**, with a message describing the step. A single squashed
+### 4.6 Secrets, attribution and git  ⚠️ standing instructions from the repo owner
+15. **All credentials live in `.env` at the repo root. `.env` is gitignored and stays gitignored.**
+    `.env.example` holds placeholder values only. Never a real connection string, never a real secret.
+16. **Never push a secret.** Not the Neon connection string, not `AUTH_SECRET`, not a password, not a
+    token — in code, in a doc, in a commit message, in a screenshot, anywhere. Before every push:
+    ```
+    git grep -nEi 'postgres(ql)?://[^ ]*:[^ ]*@|neon\.tech|AUTH_SECRET *= *["'"'"']?[A-Za-z0-9+/=]{16}'
+    ```
+    A `.git/hooks/pre-commit` guard blocks env files and credential-shaped strings locally. It is a
+    safety net, not a substitute for checking — hooks are not committed and do not travel with a clone.
+17. **ShamiDubey is the only contributor.** Never add a `Co-Authored-By:` trailer, never add Claude,
+    Anthropic or any AI tool as an author or co-author, and never let one appear in commit metadata.
+    (This is attribution only — AI use is disclosed openly and in full in `docs/ai-prompts.md`, which
+    the brief requires.)
+18. **Push only when explicitly asked.** The remote is
+    `https://github.com/ShamiDubey/project-task-tracker.git` (`origin`, branch `main`). Commit freely
+    and locally; pushing is the owner's call, every time.
+19. **Commit after every meaningful step**, with a message describing the step. A single squashed
     "initial commit" **scores zero** on git history (the brief says so in those words).
-17. Commit the docs alongside the code they describe — the interleaving is the evidence they were
+20. Commit the docs alongside the code they describe — the interleaving is the evidence they were
     written as we went.
 
 ### 4.7 Scope
-18. **Ten goals first. Stretch goals never substitute for a goal.** "Doing 8 goals well beats doing
+21. **Ten goals first. Stretch goals never substitute for a goal.** "Doing 8 goals well beats doing
     10 goals badly."
-19. **Do not add code we cannot explain on a call.** If a generated block isn't understood, rewrite it
+22. **Do not add code we cannot explain on a call.** If a generated block isn't understood, rewrite it
     simpler rather than keep it.
-20. Do not install a dependency to save five lines. Every package in `package.json` must be justifiable.
+23. Do not install a dependency to save five lines. Every package in `package.json` must be justifiable.
 
 ---
 
@@ -149,6 +163,9 @@ Rationale for each of these belongs in `docs/decisions.md` and the `SUBMISSION.m
 - ❌ Do not build stretch goals before all ten are solid.
 - ❌ Do not leave TODO comments in the submitted code. Either do it or write it in `SUBMISSION.md` as a known gap.
 - ❌ Do not touch the user's home-directory git repository at `/Users/shamidubey`. This project has its own repo.
+- ❌ Do not push without being asked. Do not force-push over `origin/main` once it is published.
+- ❌ Do not put a credential in `.env.example`, a doc, a README, a test fixture or a commit message.
+- ❌ Do not credit Claude, Anthropic or any AI as a commit author or co-author.
 
 ---
 
@@ -194,8 +211,8 @@ npm run db:seed          # populate demo data
 ### Environment variables
 | Name | Purpose | Where |
 |---|---|---|
-| `DATABASE_URL` | Neon pooled connection string | `.env.local`, Vercel project settings |
-| `AUTH_SECRET` | JWT signing secret (32+ random bytes) | `.env.local`, Vercel project settings |
+| `DATABASE_URL` | Neon pooled connection string | `.env`, Vercel project settings |
+| `AUTH_SECRET` | JWT signing secret (32+ random bytes) | `.env`, Vercel project settings |
 
 Both are placeholders in `.env.example`. Neither is ever committed with a real value.
 
