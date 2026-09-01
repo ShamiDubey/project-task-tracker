@@ -33,8 +33,6 @@ Why each of these, and what was rejected, is in [docs/decisions.md](docs/decisio
 | [docs/plan.md](docs/plan.md) | Session breakdown, build order, estimated vs actual, what was cut |
 | [docs/decisions.md](docs/decisions.md) | The decisions that shaped the codebase, including one that was reversed |
 | [docs/ai-prompts.md](docs/ai-prompts.md) | The prompts actually used, including one that produced something wrong |
-| [HEART.md](HEART.md) | The requirement spec, atomised into acceptance criteria, plus the session log |
-| [CLAUDE.md](CLAUDE.md) | Working conventions and the rules this codebase holds itself to |
 
 ## Running locally
 

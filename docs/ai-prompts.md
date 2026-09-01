@@ -17,12 +17,12 @@ I rejected or rewrote what came back, I say so.
 ### Prompt 1 — Extract the requirements before writing any code
 
 > Read all the files here — README.md, SUBMISSION.md, and docs/architecture.md, schema.md, plan.md,
-> ai-prompts.md, decisions.md. Then create a CLAUDE.md and a HEART.md holding every detail, including
-> the minute ones, from those files. We are building in Next.js with Neon for the database, over about
-> 12 hours spread across a week at roughly two hours a day. Set the project up first.
+> ai-prompts.md, decisions.md. Then write up every detail, including the minute ones, from those
+> files as working notes I can build against. We are building in Next.js with Neon for the database,
+> over about 12 hours spread across a week at roughly two hours a day. Set the project up first.
 
-**What I got:** Two files. `HEART.md` broke the ten goals into individually numbered acceptance
-criteria and — the part I actually wanted — separated the *rules stated inside* each goal from the
+**What I got:** A set of working notes (kept local, not committed) that broke the ten goals into
+individually numbered acceptance criteria and — the part I actually wanted — separated the *rules stated inside* each goal from the
 headline. The brief warns explicitly that those inner rules ("what happens on an illegal move, what a
 bulk action must report back, when a dismissed alert is allowed to reappear") *"are the actual ask,
 not just the bold headline in front of them"*, and three of them turned out to have schema
@@ -35,13 +35,13 @@ consequences I would otherwise have discovered in session 5:
 - Goal 9.6 "nothing in the timeline can be edited or deleted after the fact, including by managers"
   → the activity table needs no update or delete path at all.
 
-`CLAUDE.md` was the working-rules half: stack, conventions, and a "what not to do" list.
+The second half was working rules: stack, conventions, and a "what not to do" list.
 
 **What I corrected:** Nothing yet in the content — but I want to be honest that this was the cheap
 part. Extracting requirements is the thing language models are reliably good at. The value was in
 deciding to spend the first half-hour on it rather than on scaffolding, and the check that mattered
-was reading `HEART.md` §2 back against the brief line by line to confirm nothing had been invented
-or silently dropped. Two items in the atomised list are *my* interpretation, not the brief's words,
+was reading that atomised list back against the brief line by line to confirm nothing had been invented
+or silently dropped. Two items in it are *my* interpretation, not the brief's words,
 and are flagged as such: Goal 4.4 does not say which state a reopened task lands in (I chose
 In Progress), and Goal 7.6 does not say whether a CSV export is capped (I intend to cap it and say so).
 

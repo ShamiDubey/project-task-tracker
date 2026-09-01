@@ -21,3 +21,8 @@ next-env.d.ts
 
 # typescript
 *.tsbuildinfo
+
+# local working notes — not part of the submission
+AGENTS.md
+CLAUDE.md
+HEART.md

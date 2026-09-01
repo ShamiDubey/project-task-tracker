@@ -2,8 +2,7 @@
 
 ## How the work was broken into sessions
 
-Twelve hours, roughly two per day across a week, split into six sessions. The split is written down
-in full in [HEART.md](../HEART.md) §6; the summary is:
+Twelve hours, roughly two per day across a week, split into six sessions:
 
 | # | Session | Goals |
 |---|---|---|
@@ -55,7 +54,7 @@ The ordering rule was **schema first, then the rules that constrain it, then the
 
 ## Estimated versus actual
 
-Filled in per session as the work happens — see the running log in [HEART.md](../HEART.md) §7.
+Filled in per session as the work happens.
 
 | Session | Estimated | Actual | Notes |
 |---|---|---|---|
