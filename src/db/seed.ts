@@ -188,8 +188,10 @@ async function main() {
     NOVA: [
       { title: 'Appointment booking — pick a slot', description: 'Calendar view with the clinic’s availability rules baked in.', status: 'done', priority: 'high', dueIn: -30, assignees: ['tom@tracker.dev'], completedWeeksAgo: 5 },
       { title: 'Appointment booking — confirm and remind', description: 'Push notification 24h before, SMS fallback.', status: 'done', priority: 'medium', dueIn: -16, assignees: ['yuki@tracker.dev'], blockedBy: ['Appointment booking — pick a slot'], completedWeeksAgo: 2 },
-      { title: 'Repeat prescriptions request flow', description: 'Patient selects from their active medication list and submits to the practice.', status: 'in_review', priority: 'high', dueIn: 2, assignees: ['aisha@tracker.dev', 'tom@tracker.dev'] },
+      // Deliberately In Review *and* blocked by unfinished work: this is the shape Goal 4.5
+      // describes, so the demo has to contain one or the rule is invisible to anyone clicking around.
       { title: 'Accessibility audit against WCAG 2.2 AA', description: 'Screen reader pass on the booking journey. This is contractual.', status: 'in_progress', priority: 'urgent', dueIn: -6, assignees: ['yuki@tracker.dev'] },
+      { title: 'Repeat prescriptions request flow', description: 'Patient selects from their active medication list and submits to the practice. Cannot ship until the accessibility audit passes.', status: 'in_review', priority: 'high', dueIn: 2, assignees: ['aisha@tracker.dev', 'tom@tracker.dev'], blockedBy: ['Accessibility audit against WCAG 2.2 AA'] },
       { title: 'Offline mode for the medication list', description: 'Read-only cache so patients can see their list without signal.', status: 'blocked', priority: 'medium', dueIn: 9, assignees: ['tom@tracker.dev'], blockedBy: ['Repeat prescriptions request flow'] },
       { title: 'NHS login integration', description: 'Waiting on sandbox credentials from the trust.', status: 'backlog', priority: 'high', dueIn: 20, assignees: ['aisha@tracker.dev'] },
       { title: 'Cycle 14 planning', description: 'Nothing controversial, just needs writing up.', status: 'backlog', priority: 'low', dueIn: 6, assignees: [] },
