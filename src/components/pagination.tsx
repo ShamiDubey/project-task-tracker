@@ -26,12 +26,12 @@ export function Pagination({
 
   const link = (target: number, label: string, disabled: boolean) =>
     disabled ? (
-      <span className="rounded-lg px-2.5 py-1.5 text-xs text-ink-subtle">{label}</span>
+      <span className="rounded-lg px-2.5 py-1.5 text-xs text-ink-3">{label}</span>
     ) : (
       <Link
         href={`${basePath}${buildQuery(params, { page: String(target) })}`}
         className={cx(
-          'rounded-lg px-2.5 py-1.5 text-xs font-medium text-ink ring-1 ring-inset ring-line-strong hover:bg-slate-50',
+          'rounded-lg px-2.5 py-1.5 text-xs font-medium text-ink ring-1 ring-inset ring-line-strong hover:bg-surface-2',
         )}
       >
         {label}
@@ -40,7 +40,7 @@ export function Pagination({
 
   return (
     <div className="flex items-center justify-between gap-3 px-1 py-3">
-      <p className="text-xs text-ink-muted">
+      <p className="text-xs text-ink-2">
         Showing <span className="font-medium tabular-nums text-ink">{first}</span>–
         <span className="font-medium tabular-nums text-ink">{last}</span> of{' '}
         <span className="font-medium tabular-nums text-ink">{total}</span> matching task
@@ -48,7 +48,7 @@ export function Pagination({
       </p>
       <div className="flex items-center gap-1.5">
         {link(page - 1, 'Previous', page <= 1)}
-        <span className="px-1 text-xs text-ink-muted">
+        <span className="px-1 text-xs text-ink-2">
           Page {page} of {pageCount}
         </span>
         {link(page + 1, 'Next', page >= pageCount)}

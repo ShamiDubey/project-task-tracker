@@ -109,9 +109,9 @@ export function MembersPanel({
                   </span>
                 )}
               </p>
-              <p className="truncate text-xs text-ink-muted">{m.email}</p>
+              <p className="truncate text-xs text-ink-2">{m.email}</p>
             </div>
-            <span className="text-xs tabular-nums text-ink-muted">{m.openTasks} open</span>
+            <span className="text-xs tabular-nums text-ink-2">{m.openTasks} open</span>
             <Button
               tone="danger"
               size="sm"

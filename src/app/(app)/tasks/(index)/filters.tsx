@@ -130,8 +130,8 @@ export function TaskFilters({
             className={cx(
               'rounded-full px-2.5 py-1 text-xs ring-1 ring-inset transition-colors',
               statuses.includes(s)
-                ? 'bg-accent text-white ring-accent'
-                : 'bg-surface text-ink-muted ring-line-strong hover:bg-slate-50',
+                ? 'bg-accent text-on-accent ring-accent'
+                : 'bg-surface text-ink-2 ring-line-strong hover:bg-surface-2',
             )}
           >
             {STATUS_LABELS[s]}
@@ -148,8 +148,8 @@ export function TaskFilters({
             className={cx(
               'rounded-full px-2.5 py-1 text-xs capitalize ring-1 ring-inset transition-colors',
               priorities.includes(p)
-                ? 'bg-accent text-white ring-accent'
-                : 'bg-surface text-ink-muted ring-line-strong hover:bg-slate-50',
+                ? 'bg-accent text-on-accent ring-accent'
+                : 'bg-surface text-ink-2 ring-line-strong hover:bg-surface-2',
             )}
           >
             {p}
@@ -164,8 +164,8 @@ export function TaskFilters({
           className={cx(
             'rounded-full px-2.5 py-1 text-xs ring-1 ring-inset transition-colors',
             params.get('overdue') === '1'
-              ? 'bg-danger text-white ring-danger'
-              : 'bg-surface text-ink-muted ring-line-strong hover:bg-slate-50',
+              ? 'bg-danger text-on-accent ring-danger'
+              : 'bg-surface text-ink-2 ring-line-strong hover:bg-surface-2',
           )}
         >
           Overdue only
@@ -177,15 +177,15 @@ export function TaskFilters({
           className={cx(
             'rounded-full px-2.5 py-1 text-xs ring-1 ring-inset transition-colors',
             params.get('archived') === '1'
-              ? 'bg-ink text-white ring-ink'
-              : 'bg-surface text-ink-muted ring-line-strong hover:bg-slate-50',
+              ? 'bg-ink text-canvas ring-ink'
+              : 'bg-surface text-ink-2 ring-line-strong hover:bg-surface-2',
           )}
         >
           Include archived projects
         </button>
 
         <span className="ml-auto flex items-center gap-2">
-          <span className="text-xs tabular-nums text-ink-muted">
+          <span className="text-xs tabular-nums text-ink-2">
             {total} match{total === 1 ? '' : 'es'}
           </span>
           <a

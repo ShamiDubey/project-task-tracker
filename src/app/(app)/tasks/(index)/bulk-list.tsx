@@ -9,7 +9,7 @@ import {
   type BulkResult,
 } from '@/app/actions/bulk';
 import { TaskRowItem } from '@/components/task-table';
-import { Button, Card, EmptyState, Pill, cx, fieldClass } from '@/components/ui';
+import { Button, Card, EmptyState, Ref, cx, fieldClass } from '@/components/ui';
 import type { TaskStatus } from '@/db/schema';
 import type { TaskRow } from '@/lib/queries/tasks';
 import { STATUS_LABELS, STATUS_ORDER } from '@/lib/task-status';
@@ -71,7 +71,7 @@ export function BulkTaskList({ tasks, people }: { tasks: TaskRow[]; people: Pers
 
             <span className="mx-1 h-4 w-px bg-accent/20" />
 
-            <span className="text-xs text-ink-muted">Move to</span>
+            <span className="text-xs text-ink-2">Move to</span>
             {STATUS_ORDER.map((status) => (
               <Button
                 key={status}
@@ -143,7 +143,7 @@ export function BulkTaskList({ tasks, people }: { tasks: TaskRow[]; people: Pers
               Clear selection
             </Button>
           </div>
-          {pending && <p className="mt-2 text-xs text-ink-muted">Applying…</p>}
+          {pending && <p className="mt-2 text-xs text-ink-2">Applying…</p>}
         </div>
       )}
 
@@ -154,7 +154,7 @@ export function BulkTaskList({ tasks, people }: { tasks: TaskRow[]; people: Pers
               <span className="font-medium text-good">{result.succeeded} applied</span>
               {result.failed > 0 && (
                 <>
-                  <span className="text-ink-subtle"> · </span>
+                  <span className="text-ink-3"> · </span>
                   <span className="font-medium text-danger">{result.failed} rejected</span>
                 </>
               )}
@@ -177,7 +177,7 @@ export function BulkTaskList({ tasks, people }: { tasks: TaskRow[]; people: Pers
                   >
                     {o.ok ? '✓' : '✕'}
                   </span>
-                  <Pill>{o.ref}</Pill>
+                  <Ref>{o.ref}</Ref>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm text-ink">{o.title}</span>
                     {o.reason && <span className="block text-xs text-danger">{o.reason}</span>}
@@ -200,7 +200,7 @@ export function BulkTaskList({ tasks, people }: { tasks: TaskRow[]; people: Pers
             className="h-4 w-4 rounded border-line-strong text-accent"
             aria-label="Select all tasks on this page"
           />
-          <span className="text-xs text-ink-muted">
+          <span className="text-xs text-ink-2">
             {allSelected ? 'All on this page selected' : 'Select all on this page'}
           </span>
         </div>

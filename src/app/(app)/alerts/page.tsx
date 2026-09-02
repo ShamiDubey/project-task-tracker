@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-import { Card, CardHeader, EmptyState, PageHeader, Pill, PriorityBadge, StatusBadge } from '@/components/ui';
+import { Card, CardHeader, EmptyState, PageHeader, Ref, PriorityBadge, StatusBadge } from '@/components/ui';
 import { requireUser } from '@/lib/auth/session';
 import { relativeDue, shortDate } from '@/lib/dates';
 import { listOpenAlerts } from '@/lib/queries/alerts';
@@ -46,7 +46,7 @@ export default async function AlertsPage() {
               <li key={alert.taskId} className="flex items-start gap-3 px-4 py-3">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Pill tone="accent">{taskRef(alert.projectKey, alert.number)}</Pill>
+                    <Ref tone="accent">{taskRef(alert.projectKey, alert.number)}</Ref>
                     <Link
                       href={`/tasks/${alert.taskId}`}
                       className="truncate text-sm font-medium text-ink hover:underline"
@@ -59,7 +59,7 @@ export default async function AlertsPage() {
                     <PriorityBadge priority={alert.priority} />
                     <Link
                       href={`/projects/${alert.projectId}`}
-                      className="text-xs text-ink-muted hover:underline"
+                      className="text-xs text-ink-2 hover:underline"
                     >
                       {alert.projectName}
                     </Link>
@@ -67,13 +67,13 @@ export default async function AlertsPage() {
                 </div>
                 <div className="shrink-0 text-right">
                   <p className="text-sm font-medium text-danger">{relativeDue(alert.dueDate)}</p>
-                  <p className="text-xs text-ink-muted">Due {shortDate(alert.dueDate)}</p>
+                  <p className="text-xs text-ink-2">Due {shortDate(alert.dueDate)}</p>
                   <div className="mt-1.5">
                     {alert.isAssignedToViewer ? (
                       <DismissButton taskId={alert.taskId} />
                     ) : (
                       <span
-                        className="text-xs text-ink-subtle"
+                        className="text-xs text-ink-3"
                         title="Only someone assigned to a task can dismiss its alert."
                       >
                         Not yours to dismiss

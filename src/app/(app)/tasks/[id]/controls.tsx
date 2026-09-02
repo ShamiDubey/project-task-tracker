@@ -14,7 +14,7 @@ import {
   updateTask,
   type ActionState,
 } from '@/app/actions/tasks';
-import { Avatar, Button, Field, Notice, Pill, StatusBadge, fieldClass } from '@/components/ui';
+import { Avatar, Button, Field, Notice, Ref, StatusBadge, fieldClass } from '@/components/ui';
 import type { TaskPriority, TaskStatus } from '@/db/schema';
 import {
   STATUS_LABELS,
@@ -51,7 +51,7 @@ export function StatusControls({
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <span className="text-xs text-ink-muted">Currently</span>
+        <span className="text-xs text-ink-2">Currently</span>
         <StatusBadge status={ctx.status} />
       </div>
 
@@ -59,7 +59,7 @@ export function StatusControls({
         <>
           <div className="flex flex-wrap gap-1.5">
             {allowed.length === 0 && (
-              <p className="text-xs text-ink-muted">No moves are available from here.</p>
+              <p className="text-xs text-ink-2">No moves are available from here.</p>
             )}
             {allowed.map((status) => (
               <Button
@@ -87,7 +87,7 @@ export function StatusControls({
           {message?.error && <Notice>{message.error}</Notice>}
         </>
       ) : (
-        <p className="text-xs text-ink-muted">
+        <p className="text-xs text-ink-2">
           You are not a member of this project, so you cannot change its tasks.
         </p>
       )}
@@ -116,7 +116,7 @@ export function AssigneeControls({
     <div className="space-y-2 px-4 py-3">
       {message?.error && <Notice>{message.error}</Notice>}
 
-      {assignees.length === 0 && <p className="text-xs text-ink-muted">Nobody is assigned.</p>}
+      {assignees.length === 0 && <p className="text-xs text-ink-2">Nobody is assigned.</p>}
       <ul className="space-y-1.5">
         {assignees.map((person) => (
           <li key={person.id} className="flex items-center gap-2">
@@ -162,7 +162,7 @@ export function AssigneeControls({
         </div>
       )}
       {canWrite && candidates.length === 0 && assignees.length > 0 && (
-        <p className="pt-1 text-xs text-ink-subtle">
+        <p className="pt-1 text-xs text-ink-3">
           Everyone on this project is already assigned. Only project members can be assigned.
         </p>
       )}
@@ -190,12 +190,12 @@ export function DependencyControls({
       {message?.error && <Notice>{message.error}</Notice>}
 
       {blockers.length === 0 && (
-        <p className="text-xs text-ink-muted">Nothing is blocking this task.</p>
+        <p className="text-xs text-ink-2">Nothing is blocking this task.</p>
       )}
       <ul className="space-y-1.5">
         {blockers.map((b) => (
           <li key={b.id} className="flex items-center gap-2">
-            <Pill>{b.ref}</Pill>
+            <Ref>{b.ref}</Ref>
             <span className="min-w-0 flex-1 truncate text-sm text-ink">{b.title}</span>
             <StatusBadge status={b.status} />
             {canWrite && (
@@ -240,7 +240,7 @@ export function DependencyControls({
         </div>
       )}
       {canWrite && (
-        <p className="pt-1 text-xs text-ink-subtle">
+        <p className="pt-1 text-xs text-ink-3">
           Only tasks in the same project can block this one.
         </p>
       )}
@@ -272,7 +272,7 @@ export function CommentForm({ taskId }: { taskId: string }) {
         className={fieldClass}
       />
       <div className="flex items-center justify-between">
-        <p className="text-xs text-ink-subtle">
+        <p className="text-xs text-ink-3">
           Comments are part of the permanent timeline and cannot be edited or deleted.
         </p>
         <CommentSubmit />

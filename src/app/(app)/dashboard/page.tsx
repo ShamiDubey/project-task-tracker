@@ -1,15 +1,18 @@
 import Link from 'next/link';
 
 import { CompletionsChart } from '@/components/completions-chart';
+import { IconArrowRight } from '@/components/icons';
 import {
   Avatar,
   Card,
   CardHeader,
   EmptyState,
+  OverdueBadge,
   PageHeader,
-  Pill,
   PriorityBadge,
+  Ref,
   StatusBadge,
+  cx,
 } from '@/components/ui';
 import { requireUser } from '@/lib/auth/session';
 import { relativeDue } from '@/lib/dates';
@@ -22,33 +25,61 @@ import {
 } from '@/lib/queries/dashboard';
 import { STATUS_LABELS, STATUS_ORDER, taskRef } from '@/lib/task-status';
 
-export const metadata = { title: 'Dashboard · Project Tracker' };
+export const metadata = { title: 'Dashboard' };
 
+/**
+ * The landing view.
+ *
+ * Ordered by the question it answers, not by what was easy to compute: the four headline numbers
+ * first, then throughput, then the two things a manager actually acts on — who is carrying too much,
+ * and what has been late the longest.
+ */
 function Stat({
   label,
   value,
   tone = 'neutral',
   href,
+  note,
 }: {
   label: string;
   value: number;
   tone?: 'neutral' | 'danger' | 'good';
   href?: string;
+  note?: string;
 }) {
   const body = (
-    <Card className="p-4 transition-shadow hover:shadow-sm">
-      <p className="text-xs font-medium text-ink-muted">{label}</p>
+    <div
+      className={cx(
+        'group relative h-full overflow-hidden rounded-xl border bg-surface px-4 py-3.5 shadow-e1 transition-all duration-150',
+        tone === 'danger' && value > 0 ? 'border-danger-line' : 'border-line',
+        href && 'hover:-translate-y-px hover:shadow-e2',
+      )}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-medium text-ink-2">{label}</p>
+        {href && (
+          <IconArrowRight className="h-3.5 w-3.5 text-ink-3 opacity-0 transition-opacity group-hover:opacity-100" />
+        )}
+      </div>
       <p
-        className={
-          'mt-1 text-2xl font-semibold tabular-nums ' +
-          (tone === 'danger' ? 'text-danger' : tone === 'good' ? 'text-good' : 'text-ink')
-        }
+        data-metric
+        className={cx(
+          'mt-1.5 text-[28px] font-semibold leading-none',
+          tone === 'danger' && value > 0 ? 'text-danger' : tone === 'good' ? 'text-good' : 'text-ink',
+        )}
       >
         {value}
       </p>
-    </Card>
+      {note && <p className="mt-1.5 text-2xs text-ink-3">{note}</p>}
+    </div>
   );
-  return href ? <Link href={href}>{body}</Link> : body;
+  return href ? (
+    <Link href={href} className="block h-full">
+      {body}
+    </Link>
+  ) : (
+    body
+  );
 }
 
 export default async function DashboardPage() {
@@ -65,101 +96,110 @@ export default async function DashboardPage() {
   const statusMap = new Map(byStatus.map((r) => [r.status, r.n]));
   const totalTasks = byStatus.reduce((sum, r) => sum + r.n, 0);
   const busiest = byAssignee[0]?.open ?? 0;
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
   return (
     <>
       <PageHeader
-        title={`Good to see you, ${user.name.split(' ')[0]}`}
+        eyebrow={user.role === 'manager' ? 'Portfolio' : 'Your projects'}
+        title={`${greeting}, ${user.name.split(' ')[0]}`}
         subtitle={
-          user.role === 'manager'
-            ? 'The whole portfolio, across every project.'
-            : 'Across the projects you are on.'
+          headline.overdueTasks > 0
+            ? `${headline.overdueTasks} ${headline.overdueTasks === 1 ? 'task is' : 'tasks are'} past due and ${headline.dueThisWeek} more ${headline.dueThisWeek === 1 ? 'is' : 'are'} due this week.`
+            : 'Nothing is overdue. Here is where the work stands.'
         }
       />
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="Open tasks" value={headline.openTasks} href="/tasks?status=open" />
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Stat label="Open tasks" value={headline.openTasks} href="/tasks?status=open" note="Everything not finished" />
         <Stat
           label="Overdue"
           value={headline.overdueTasks}
-          tone={headline.overdueTasks > 0 ? 'danger' : 'neutral'}
+          tone="danger"
           href="/tasks?overdue=1"
+          note="Past due, not finished"
         />
-        <Stat label="Due this week" value={headline.dueThisWeek} />
-        <Stat label="Completed this week" value={headline.completedThisWeek} tone="good" />
-      </div>
+        <Stat label="Due this week" value={headline.dueThisWeek} note="Monday to Sunday" />
+        <Stat label="Completed this week" value={headline.completedThisWeek} tone="good" note="Moved to Done" />
+      </section>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+      <section className="mt-4 grid gap-4 lg:grid-cols-5">
+        <Card className="lg:col-span-3">
           <CardHeader
-            title="Completions, last eight weeks"
-            subtitle="Tasks moved to Done, bucketed by the week they were finished."
+            title="Throughput"
+            subtitle="Tasks finished each week. Weeks with none are still plotted, so the shape is honest."
           />
           <CompletionsChart data={completions} />
         </Card>
 
-        <Card>
+        <Card className="lg:col-span-2">
           <CardHeader title="By status" subtitle={`${totalTasks} tasks in view`} />
           <ul className="divide-y divide-line">
             {STATUS_ORDER.map((status) => {
               const n = statusMap.get(status) ?? 0;
-              const pct = totalTasks ? Math.round((n / totalTasks) * 100) : 0;
+              const pct = totalTasks ? (n / totalTasks) * 100 : 0;
               return (
-                <li key={status} className="flex items-center gap-3 px-4 py-2.5">
-                  <span className="w-24 shrink-0">
-                    <StatusBadge status={status} />
-                  </span>
-                  <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100">
-                    <span
-                      className="block h-full rounded-full bg-accent"
-                      style={{ width: `${pct}%` }}
-                    />
-                  </span>
-                  <span className="w-8 text-right text-sm tabular-nums text-ink-muted">{n}</span>
+                <li key={status}>
+                  <Link
+                    href={`/tasks?status=${status}`}
+                    className="flex items-center gap-3 px-4 py-[11px] transition-colors hover:bg-surface-2"
+                  >
+                    <span className="w-[104px] shrink-0">
+                      <StatusBadge status={status} size="sm" />
+                    </span>
+                    <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-sunk">
+                      <span
+                        className="block h-full rounded-full bg-accent transition-[width] duration-500"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </span>
+                    <span data-metric className="w-7 text-right text-xs font-medium text-ink-2">
+                      {n}
+                    </span>
+                  </Link>
                 </li>
               );
             })}
           </ul>
         </Card>
-      </div>
+      </section>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+      <section className="mt-4 grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader
             title="Who is carrying what"
-            subtitle="Open tasks per person. The red portion is already overdue."
+            subtitle="Open tasks per person. The red segment is already late."
           />
           {byAssignee.length === 0 ? (
-            <EmptyState title="Nothing assigned yet." />
+            <EmptyState title="Nothing assigned yet." hint="Assign work and the load shows up here." />
           ) : (
             <ul className="divide-y divide-line">
               {byAssignee.map((person) => (
-                <li key={person.userId} className="flex items-center gap-3 px-4 py-2.5">
-                  <Avatar name={person.name} size="sm" />
+                <li key={person.userId}>
                   <Link
-                    href={`/tasks?assignee=${person.userId}`}
-                    className="w-32 shrink-0 truncate text-sm text-ink hover:underline"
+                    href={`/tasks?assignee=${person.userId}&status=open`}
+                    className="flex items-center gap-3 px-4 py-[11px] transition-colors hover:bg-surface-2"
                   >
-                    {person.name}
+                    <Avatar name={person.name} size="sm" />
+                    <span className="w-28 shrink-0 truncate text-sm text-ink">{person.name}</span>
+                    <span className="flex h-2 flex-1 overflow-hidden rounded-full bg-sunk">
+                      <span
+                        className="h-full bg-danger transition-[width] duration-500"
+                        style={{ width: `${busiest ? (person.overdue / busiest) * 100 : 0}%` }}
+                      />
+                      <span
+                        className="h-full bg-accent transition-[width] duration-500"
+                        style={{ width: `${busiest ? ((person.open - person.overdue) / busiest) * 100 : 0}%` }}
+                      />
+                    </span>
+                    <span data-metric className="w-14 shrink-0 text-right text-xs text-ink-2">
+                      {person.open}
+                      {person.overdue > 0 && (
+                        <span className="ml-1 font-medium text-danger">·{person.overdue}</span>
+                      )}
+                    </span>
                   </Link>
-                  <span className="flex h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
-                    <span
-                      className="h-full bg-danger"
-                      style={{ width: `${busiest ? (person.overdue / busiest) * 100 : 0}%` }}
-                    />
-                    <span
-                      className="h-full bg-accent"
-                      style={{
-                        width: `${busiest ? ((person.open - person.overdue) / busiest) * 100 : 0}%`,
-                      }}
-                    />
-                  </span>
-                  <span className="w-16 text-right text-sm tabular-nums text-ink-muted">
-                    {person.open}
-                    {person.overdue > 0 && (
-                      <span className="ml-1 text-xs text-danger">({person.overdue})</span>
-                    )}
-                  </span>
                 </li>
               ))}
             </ul>
@@ -168,11 +208,14 @@ export default async function DashboardPage() {
 
         <Card>
           <CardHeader
-            title="Most overdue"
-            subtitle="The work that has been late the longest."
+            title="Late the longest"
+            subtitle="Where a client is most likely to notice first."
             action={
-              <Link href="/alerts" className="text-xs font-medium text-accent hover:underline">
-                All alerts
+              <Link
+                href="/alerts"
+                className="flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+              >
+                All alerts <IconArrowRight className="h-3 w-3" />
               </Link>
             }
           />
@@ -181,29 +224,32 @@ export default async function DashboardPage() {
           ) : (
             <ul className="divide-y divide-line">
               {overdue.map((task) => (
-                <li key={task.id} className="px-4 py-2.5">
-                  <Link href={`/tasks/${task.id}`} className="group flex items-center gap-2">
-                    <Pill>{taskRef(task.projectKey, task.number)}</Pill>
-                    <span className="min-w-0 flex-1 truncate text-sm text-ink group-hover:underline">
-                      {task.title}
+                <li key={task.id}>
+                  <Link
+                    href={`/tasks/${task.id}`}
+                    className="group flex items-start gap-2.5 px-4 py-[11px] transition-colors hover:bg-surface-2"
+                  >
+                    <Ref>{taskRef(task.projectKey, task.number)}</Ref>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm text-ink group-hover:text-accent">
+                        {task.title}
+                      </span>
+                      <span className="mt-1 flex items-center gap-2.5">
+                        <PriorityBadge priority={task.priority} showLabel={false} />
+                        <span className="text-2xs text-ink-3">{STATUS_LABELS[task.status]}</span>
+                      </span>
                     </span>
-                    <StatusBadge status={task.status} />
-                    <span className="w-20 shrink-0 text-right text-xs text-danger">
-                      {relativeDue(task.dueDate)}
+                    <span className="shrink-0 text-right">
+                      <OverdueBadge />
+                      <span className="mt-1 block text-2xs text-ink-3">{relativeDue(task.dueDate)}</span>
                     </span>
                   </Link>
-                  <div className="mt-1 flex items-center gap-2 pl-1">
-                    <PriorityBadge priority={task.priority} />
-                    <span className="text-xs text-ink-subtle">
-                      {STATUS_LABELS[task.status]} · {task.projectKey}
-                    </span>
-                  </div>
                 </li>
               ))}
             </ul>
           )}
         </Card>
-      </div>
+      </section>
     </>
   );
 }

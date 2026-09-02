@@ -62,7 +62,7 @@ function describe(entry: Entry): string {
  */
 export function Timeline({ entries }: { entries: Entry[] }) {
   if (entries.length === 0) {
-    return <p className="px-4 py-6 text-sm text-ink-muted">Nothing recorded yet.</p>;
+    return <p className="px-4 py-6 text-sm text-ink-2">Nothing recorded yet.</p>;
   }
 
   return (
@@ -78,16 +78,16 @@ export function Timeline({ entries }: { entries: Entry[] }) {
           <div className="min-w-0 flex-1">
             {entry.type === 'commented' ? (
               <>
-                <p className="text-xs text-ink-muted">
+                <p className="text-xs text-ink-2">
                   <span className="font-medium text-ink">{entry.actorName ?? 'Someone'}</span>{' '}
                   commented · {longDateTime(entry.createdAt)}
                 </p>
-                <p className="mt-1 whitespace-pre-wrap rounded-lg bg-canvas px-3 py-2 text-sm text-ink">
+                <p className="mt-1 whitespace-pre-wrap rounded-lg bg-sunk px-3 py-2 text-sm text-ink">
                   {entry.body}
                 </p>
               </>
             ) : (
-              <p className="text-xs text-ink-muted">
+              <p className="text-xs text-ink-2">
                 <span className="font-medium text-ink">{entry.actorName ?? 'Someone'}</span>{' '}
                 {describe(entry)} · {longDateTime(entry.createdAt)}
               </p>

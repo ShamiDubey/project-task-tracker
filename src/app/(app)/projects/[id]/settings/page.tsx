@@ -1,6 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
 
-import { Card, CardHeader, PageHeader, Pill } from '@/components/ui';
+import { Card, CardHeader, PageHeader, Ref } from '@/components/ui';
 import { requireUser } from '@/lib/auth/session';
 import { isManager } from '@/lib/authz';
 import { getProject, listAllUsers, listProjectMembers } from '@/lib/queries/projects';
@@ -28,7 +28,7 @@ export default async function ProjectSettingsPage({
       <PageHeader
         title={
           <span className="flex items-center gap-2">
-            <Pill tone="accent">{project.key}</Pill>
+            <Ref tone="accent">{project.key}</Ref>
             Project settings
           </span>
         }

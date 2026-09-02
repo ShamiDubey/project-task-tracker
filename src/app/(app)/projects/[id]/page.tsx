@@ -9,7 +9,7 @@ import {
   LinkButton,
   Notice,
   PageHeader,
-  Pill,
+  Ref,
 } from '@/components/ui';
 import { requireUser } from '@/lib/auth/session';
 import { canViewProject, isManager } from '@/lib/authz';
@@ -37,10 +37,10 @@ export default async function ProjectPage({ params }: PageProps<'/projects/[id]'
       <PageHeader
         title={
           <span className="flex items-center gap-2">
-            <Pill tone="accent">{project.key}</Pill>
+            <Ref tone="accent">{project.key}</Ref>
             {project.name}
             {project.archivedAt && (
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-normal text-ink-muted">
+              <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs font-normal text-ink-2">
                 Archived
               </span>
             )}
@@ -125,9 +125,9 @@ export default async function ProjectPage({ params }: PageProps<'/projects/[id]'
                   <Avatar name={m.name} size="sm" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm text-ink">{m.name}</p>
-                    <p className="truncate text-xs text-ink-muted">{m.email}</p>
+                    <p className="truncate text-xs text-ink-2">{m.email}</p>
                   </div>
-                  <span className="text-xs tabular-nums text-ink-muted">{m.openTasks} open</span>
+                  <span className="text-xs tabular-nums text-ink-2">{m.openTasks} open</span>
                 </li>
               ))}
             </ul>

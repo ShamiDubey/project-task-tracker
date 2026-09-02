@@ -7,7 +7,7 @@ import {
   Notice,
   OverdueBadge,
   PageHeader,
-  Pill,
+  Ref,
   PriorityBadge,
   StatusBadge,
 } from '@/components/ui';
@@ -68,7 +68,7 @@ export default async function TaskPage({ params }: PageProps<'/tasks/[id]'>) {
       <PageHeader
         title={
           <span className="flex flex-wrap items-center gap-2">
-            <Pill tone="accent">{taskRef(task.projectKey, task.number)}</Pill>
+            <Ref tone="accent">{taskRef(task.projectKey, task.number)}</Ref>
             {task.title}
           </span>
         }
@@ -77,9 +77,9 @@ export default async function TaskPage({ params }: PageProps<'/tasks/[id]'>) {
             <Link href={`/projects/${task.projectId}`} className="hover:underline">
               {task.projectName}
             </Link>
-            <span className="text-ink-subtle">·</span>
+            <span className="text-ink-3">·</span>
             <span>Created {shortDate(task.createdAt)}</span>
-            <span className="text-ink-subtle">·</span>
+            <span className="text-ink-3">·</span>
             <span>Updated {longDateTime(task.updatedAt)}</span>
           </span>
         }
@@ -116,7 +116,7 @@ export default async function TaskPage({ params }: PageProps<'/tasks/[id]'>) {
               {task.description ? (
                 <p className="whitespace-pre-wrap text-sm text-ink">{task.description}</p>
               ) : (
-                <p className="text-sm text-ink-muted">No description.</p>
+                <p className="text-sm text-ink-2">No description.</p>
               )}
             </div>
           </Card>
@@ -143,13 +143,13 @@ export default async function TaskPage({ params }: PageProps<'/tasks/[id]'>) {
             <CardHeader title="Details" />
             <dl className="divide-y divide-line text-sm">
               <div className="flex items-center justify-between px-4 py-2.5">
-                <dt className="text-ink-muted">Priority</dt>
+                <dt className="text-ink-2">Priority</dt>
                 <dd>
                   <PriorityBadge priority={task.priority} />
                 </dd>
               </div>
               <div className="flex items-center justify-between px-4 py-2.5">
-                <dt className="text-ink-muted">Due</dt>
+                <dt className="text-ink-2">Due</dt>
                 <dd className="flex items-center gap-2">
                   {overdue && <OverdueBadge />}
                   <span className={overdue ? 'text-danger' : 'text-ink'}>
@@ -159,13 +159,13 @@ export default async function TaskPage({ params }: PageProps<'/tasks/[id]'>) {
               </div>
               {task.completedAt && (
                 <div className="flex items-center justify-between px-4 py-2.5">
-                  <dt className="text-ink-muted">Completed</dt>
+                  <dt className="text-ink-2">Completed</dt>
                   <dd className="text-good">{shortDate(task.completedAt)}</dd>
                 </div>
               )}
               {task.blockedFromStatus && (
                 <div className="flex items-center justify-between px-4 py-2.5">
-                  <dt className="text-ink-muted">Blocked from</dt>
+                  <dt className="text-ink-2">Blocked from</dt>
                   <dd>
                     <StatusBadge status={task.blockedFromStatus} />
                   </dd>
@@ -207,7 +207,7 @@ export default async function TaskPage({ params }: PageProps<'/tasks/[id]'>) {
               <ul className="divide-y divide-line">
                 {blocking.map((b) => (
                   <li key={b.id} className="flex items-center gap-2 px-4 py-2.5">
-                    <Pill>{taskRef(b.projectKey, b.number)}</Pill>
+                    <Ref>{taskRef(b.projectKey, b.number)}</Ref>
                     <Link
                       href={`/tasks/${b.id}`}
                       className="min-w-0 flex-1 truncate text-sm text-ink hover:underline"
