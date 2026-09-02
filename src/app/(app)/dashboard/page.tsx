@@ -56,7 +56,7 @@ function Stat({
       <div
         style={delay(i)}
         className={cx(
-          'reveal edge-glow group relative h-full overflow-hidden rounded-xl border bg-surface px-4 py-3.5 shadow-e1 transition-shadow duration-200',
+          'reveal group relative h-full overflow-hidden rounded-xl border bg-surface px-4 py-3.5 shadow-e1 transition-shadow duration-200',
           alarmed ? 'border-danger-line' : 'border-line',
           href && 'hover:shadow-e2',
         )}

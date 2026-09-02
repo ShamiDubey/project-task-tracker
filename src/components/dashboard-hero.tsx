@@ -1,11 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef } from 'react';
-
 import { IconArrowRight } from './icons';
 import { Counter } from './counter';
-import { usePrefersReducedMotion } from './motion';
 import { Ref, cx } from './ui';
 
 /**
@@ -16,8 +13,8 @@ import { Ref, cx } from './ui';
  * — and puts the single most urgent thing directly under it, so the first screen answers "what do I
  * do now" rather than "here is some data".
  *
- * The gradient wash follows the pointer, which is the only decoration here; everything else is the
- * sentence.
+ * There is no decoration on it. An earlier version washed a gradient under the cursor; the sentence
+ * and the figures are the content, and a blob following the mouse only competed with them.
  */
 export function DashboardHero({
   name,
@@ -34,46 +31,11 @@ export function DashboardHero({
   openTasks: number;
   focus: { id: string; ref: string; title: string; daysLate: number; project: string } | null;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const reduced = usePrefersReducedMotion();
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || reduced) return;
-    let frame = 0;
-    const onMove = (e: PointerEvent) => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        const r = el.getBoundingClientRect();
-        el.style.setProperty('--mx', `${((e.clientX - r.left) / r.width) * 100}%`);
-        el.style.setProperty('--my', `${((e.clientY - r.top) / r.height) * 100}%`);
-      });
-    };
-    el.addEventListener('pointermove', onMove);
-    return () => {
-      cancelAnimationFrame(frame);
-      el.removeEventListener('pointermove', onMove);
-    };
-  }, [reduced]);
-
   const hour = new Date().getHours();
   const period = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
 
   return (
-    <div
-      ref={ref}
-      className="edge-glow group relative mb-5 overflow-hidden rounded-2xl border border-line bg-surface px-6 py-6 shadow-e1 md:px-8 md:py-7"
-      style={{ '--mx': '50%', '--my': '50%' } as React.CSSProperties}
-    >
-      {/* A wash that follows the cursor. Sits under everything and never blocks a click. */}
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-        style={{
-          background:
-            'radial-gradient(520px circle at var(--mx) var(--my), color-mix(in srgb, var(--accent) 9%, transparent), transparent 62%)',
-        }}
-      />
+    <div className="relative mb-5 overflow-hidden rounded-2xl border border-line bg-surface px-6 py-6 shadow-e1 md:px-8 md:py-7">
       {/* A fine grid, masked away toward the middle so it never competes with the text. */}
       <span
         aria-hidden

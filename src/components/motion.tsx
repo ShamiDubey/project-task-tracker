@@ -25,25 +25,26 @@ export function usePrefersReducedMotion(): boolean {
 }
 
 /**
- * A surface that tilts toward the pointer and carries a specular highlight where the cursor is.
+ * A surface that leans toward the pointer.
  *
  * The rotation is capped low — six degrees at the corners — because the point is that the card
- * acknowledges the pointer, not that it performs. Past about eight degrees the text starts to
- * keystone and the whole thing reads as a toy.
+ * acknowledges the pointer, not that it performs. Past about eight degrees the text keystones and
+ * the whole thing reads as a toy.
  *
- * Everything is written to CSS custom properties and read by a transform, so the browser stays on
+ * Geometry only. This originally also painted a highlight that followed the cursor across the card;
+ * it read as a blob chasing the mouse rather than as the surface responding, so it was removed.
+ *
+ * The angles are written to CSS custom properties and read by a transform, so the browser stays on
  * the compositor: no layout, no paint, no React re-render per pointer move.
  */
 export function Tilt({
   children,
   className,
   max = 6,
-  glare = true,
 }: {
   children: ReactNode;
   className?: string;
   max?: number;
-  glare?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -60,8 +61,6 @@ export function Tilt({
         const py = (e.clientY - r.top) / r.height;
         el.style.setProperty('--rx', `${(0.5 - py) * max * 2}deg`);
         el.style.setProperty('--ry', `${(px - 0.5) * max * 2}deg`);
-        el.style.setProperty('--mx', `${px * 100}%`);
-        el.style.setProperty('--my', `${py * 100}%`);
       });
     };
     const onLeave = () => {
@@ -82,7 +81,7 @@ export function Tilt({
   return (
     <div
       ref={ref}
-      className={cx('tilt', glare && 'tilt-glare', className)}
+      className={cx('tilt', className)}
       style={{ '--rx': '0deg', '--ry': '0deg' } as React.CSSProperties}
     >
       {children}

@@ -67,7 +67,7 @@ export default async function ProjectsPage({ searchParams }: PageProps<'/project
                 <Tilt max={5} className="h-full">
                   <Card
                     className={cx(
-                      'edge-glow relative flex h-full flex-col p-4 group-hover:shadow-e2',
+                      'relative flex h-full flex-col p-4 group-hover:shadow-e2',
                       project.archivedAt && 'opacity-70',
                     )}
                   >
