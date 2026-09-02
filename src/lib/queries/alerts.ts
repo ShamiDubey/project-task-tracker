@@ -34,6 +34,7 @@ function overdueConditions(user: User) {
   return and(
     lt(tasks.dueDate, todayISO()),
     ne(tasks.status, 'done'),
+    isNull(tasks.deletedAt),
     isNull(projects.archivedAt),
     visibleProjects(user),
     notDismissedBy(user),

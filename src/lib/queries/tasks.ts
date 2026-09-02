@@ -12,7 +12,22 @@
  */
 import 'server-only';
 
-import { and, asc, count, desc, eq, ilike, inArray, isNotNull, lt, ne, or, sql, type SQL } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  isNotNull,
+  isNull,
+  lt,
+  ne,
+  or,
+  sql,
+  type SQL,
+} from 'drizzle-orm';
 
 import { db } from '@/db';
 import {
@@ -66,7 +81,12 @@ export const DEFAULT_PAGE_SIZE = 25;
 
 /** Builds the WHERE clause shared by the list, the count and the CSV export. */
 function buildWhere(user: User, f: TaskFilters): SQL | undefined {
-  const conditions: (SQL | undefined)[] = [visibleProjects(user, f.includeArchived ?? false)];
+  const conditions: (SQL | undefined)[] = [
+    visibleProjects(user, f.includeArchived ?? false),
+    // Soft-deleted tasks are invisible everywhere. Filtering here rather than at each call site is
+    // what makes that true of the list, the count, the CSV export and My tasks at once.
+    isNull(tasks.deletedAt),
+  ];
 
   // Goal 6.1 — text search over titles *and* descriptions.
   if (f.q) {

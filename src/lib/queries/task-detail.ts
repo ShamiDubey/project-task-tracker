@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { and, asc, eq, ne } from 'drizzle-orm';
+import { and, asc, eq, isNull, ne } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 
 import { db } from '@/db';
@@ -37,7 +37,7 @@ export async function getTask(taskId: string) {
     })
     .from(tasks)
     .innerJoin(projects, eq(projects.id, tasks.projectId))
-    .where(eq(tasks.id, taskId))
+    .where(and(eq(tasks.id, taskId), isNull(tasks.deletedAt)))
     .limit(1);
   return row ?? null;
 }
@@ -133,6 +133,6 @@ export async function candidateBlockers(projectId: string, taskId: string) {
   return db
     .select({ id: tasks.id, number: tasks.number, title: tasks.title, status: tasks.status })
     .from(tasks)
-    .where(and(eq(tasks.projectId, projectId), ne(tasks.id, taskId)))
+    .where(and(eq(tasks.projectId, projectId), ne(tasks.id, taskId), isNull(tasks.deletedAt)))
     .orderBy(asc(tasks.number));
 }

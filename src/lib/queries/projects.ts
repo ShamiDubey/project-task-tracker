@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { and, asc, count, eq, isNull, ne, sql } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 
 import { db } from '@/db';
 import { projectMembers, projects, tasks, users, type User } from '@/db/schema';
@@ -37,11 +37,13 @@ export async function listProjects(user: User, includeArchived = false): Promise
       openTasks: sql<number>`(
         select count(*)::int from ${tasks}
         where ${tasks.projectId} = ${projects.id} and ${tasks.status} <> 'done'
+          and ${tasks.deletedAt} is null
       )`,
       overdueTasks: sql<number>`(
         select count(*)::int from ${tasks}
         where ${tasks.projectId} = ${projects.id}
           and ${tasks.status} <> 'done'
+          and ${tasks.deletedAt} is null
           and ${tasks.dueDate} < ${todayISO()}
       )`,
     })
@@ -82,7 +84,8 @@ export async function listProjectMembers(projectId: string) {
       openTasks: sql<number>`(
         select count(*)::int from ${tasks}
         join task_assignees ta on ta.task_id = ${tasks.id}
-        where ta.user_id = ${users.id} and ${tasks.projectId} = ${projectId} and ${tasks.status} <> 'done'
+        where ta.user_id = ${users.id} and ${tasks.projectId} = ${projectId}
+          and ${tasks.status} <> 'done' and ${tasks.deletedAt} is null
       )`,
     })
     .from(projectMembers)
@@ -97,17 +100,6 @@ export async function listAllUsers() {
     .select({ id: users.id, name: users.name, email: users.email, role: users.role })
     .from(users)
     .orderBy(asc(users.name));
-}
-
-export async function countProjectTasks(projectId: string) {
-  const [row] = await db
-    .select({
-      total: count(),
-      open: sql<number>`count(*) filter (where ${tasks.status} <> 'done')::int`,
-    })
-    .from(tasks)
-    .where(eq(tasks.projectId, projectId));
-  return row ?? { total: 0, open: 0 };
 }
 
 /** Projects the viewer can pick from in filters — cheap, no aggregates. */
@@ -132,12 +124,4 @@ export async function listAssigneeOptions(user: User) {
       )`,
     )
     .orderBy(asc(users.name));
-}
-
-export async function activeProjectCount(user: User): Promise<number> {
-  const [row] = await db
-    .select({ n: count() })
-    .from(projects)
-    .where(and(visibleProjects(user), isNull(projects.archivedAt), ne(projects.key, '')));
-  return row?.n ?? 0;
 }

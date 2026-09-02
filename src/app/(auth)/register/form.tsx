@@ -37,15 +37,9 @@ export function RegisterForm() {
           className={fieldClass}
         />
       </Field>
-      <Field
-        label="Role"
-        hint="Managers run projects and the portfolio. Members work on the projects they are added to."
-      >
-        <select name="role" defaultValue="member" className={fieldClass}>
-          <option value="member">Member</option>
-          <option value="manager">Manager</option>
-        </select>
-      </Field>
+      <p className="text-xs text-ink-2">
+        New accounts are members. Managers are granted by an existing manager, never chosen here.
+      </p>
       <Submit />
     </form>
   );

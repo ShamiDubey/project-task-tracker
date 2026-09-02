@@ -35,7 +35,6 @@ export async function register(_prev: FormState, formData: FormData): Promise<Fo
     email: formData.get('email'),
     name: formData.get('name'),
     password: formData.get('password'),
-    role: formData.get('role'),
   });
   if (!parsed.success) return { error: firstError(parsed.error) };
 
@@ -51,7 +50,8 @@ export async function register(_prev: FormState, formData: FormData): Promise<Fo
     .values({
       email: parsed.data.email,
       name: parsed.data.name,
-      role: parsed.data.role,
+      // Never taken from the form — see registerSchema.
+      role: 'member',
       passwordHash: await hashPassword(parsed.data.password),
     })
     .returning();

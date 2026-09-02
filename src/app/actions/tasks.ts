@@ -7,7 +7,6 @@ import { redirect } from 'next/navigation';
 import { db } from '@/db';
 import {
   alertDismissals,
-  projectMembers,
   projects,
   taskAssignees,
   taskDependencies,
@@ -20,11 +19,12 @@ import {
   logComment,
   logCreated,
   logDependency,
+  logFieldChange,
   logStatusChange,
 } from '@/lib/activity';
 import { requireUser } from '@/lib/auth/session';
 import { AuthzError, requireManager, requireProjectAccess, requireTaskWriteAccess } from '@/lib/authz';
-import { getBlockers, getTask, transitionContext } from '@/lib/queries/task-detail';
+import { getTask, transitionContext } from '@/lib/queries/task-detail';
 import { taskRef, validateTransition } from '@/lib/task-status';
 import { commentSchema, firstError, taskSchema } from '@/lib/validation/schemas';
 
@@ -163,6 +163,15 @@ export async function updateTask(_prev: ActionState, formData: FormData): Promis
 /**
  * Goal 1.3 — deleting a task is a manager-only action, checked here on the server. A member who
  * crafts the request by hand gets the same refusal as one who never sees the button.
+ *
+ * It is a *soft* delete, and that is a deliberate reading of two goals that collide. Goal 1.3 lets
+ * managers delete tasks; Goal 9.6 says nothing in the timeline can be deleted, "including by
+ * managers". A hard delete would cascade the task's history away and hand every manager a way to
+ * erase the record — which is exactly what Goal 9 exists to prevent.
+ *
+ * So the task disappears from every view and its timeline survives, with the deletion itself
+ * recorded as the last entry. This mirrors the pattern the brief already sanctions for projects,
+ * where archiving hides something "without destroying its data".
  */
 export async function deleteTask(taskId: string): Promise<ActionState> {
   let projectId: string;
@@ -170,7 +179,21 @@ export async function deleteTask(taskId: string): Promise<ActionState> {
     const { user, task } = await loadTaskForActor(taskId);
     requireManager(user, 'delete tasks');
     projectId = task.projectId;
-    await db.delete(tasks).where(eq(tasks.id, taskId));
+
+    await db.transaction(async (tx) => {
+      await tx
+        .update(tasks)
+        .set({ deletedAt: new Date(), updatedAt: new Date() })
+        .where(eq(tasks.id, taskId));
+      await logFieldChange({
+        tx,
+        taskId,
+        actorId: user.id,
+        field: 'deleted',
+        oldValue: null,
+        newValue: new Date().toISOString(),
+      });
+    });
   } catch (err) {
     return { error: toMessage(err) };
   }
@@ -407,13 +430,4 @@ export async function dismissAlert(taskId: string): Promise<ActionState> {
   }
 }
 
-/** People who may be assigned to this task — Goal 5.2, the project's members and nobody else. */
-export async function assignableMembers(projectId: string) {
-  return db
-    .select({ id: projectMembers.userId })
-    .from(projectMembers)
-    .where(eq(projectMembers.projectId, projectId));
-}
 
-/** Re-exported so the detail page can show why Done is unavailable. */
-export { getBlockers };

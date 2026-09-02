@@ -7,7 +7,7 @@
  */
 import 'server-only';
 
-import { and, eq, gte, isNotNull, lt, ne, sql } from 'drizzle-orm';
+import { and, eq, gte, isNotNull, isNull, lt, ne, sql } from 'drizzle-orm';
 
 import { db } from '@/db';
 import {
@@ -53,7 +53,7 @@ export async function headlineNumbers(user: User): Promise<Headline> {
     })
     .from(tasks)
     .innerJoin(projects, eq(projects.id, tasks.projectId))
-    .where(visibleProjects(user));
+    .where(and(visibleProjects(user), isNull(tasks.deletedAt)));
 
   return row ?? { openTasks: 0, overdueTasks: 0, dueThisWeek: 0, completedThisWeek: 0 };
 }
@@ -64,7 +64,7 @@ export async function countsByStatus(user: User): Promise<{ status: TaskStatus; 
     .select({ status: tasks.status, n: sql<number>`count(*)::int` })
     .from(tasks)
     .innerJoin(projects, eq(projects.id, tasks.projectId))
-    .where(visibleProjects(user))
+    .where(and(visibleProjects(user), isNull(tasks.deletedAt)))
     .groupBy(tasks.status);
   return rows;
 }
@@ -88,7 +88,7 @@ export async function loadByAssignee(user: User) {
     .innerJoin(tasks, eq(tasks.id, taskAssignees.taskId))
     .innerJoin(projects, eq(projects.id, tasks.projectId))
     .innerJoin(users, eq(users.id, taskAssignees.userId))
-    .where(and(visibleProjects(user), ne(tasks.status, 'done')))
+    .where(and(visibleProjects(user), ne(tasks.status, 'done'), isNull(tasks.deletedAt)))
     .groupBy(users.id, users.name)
     .orderBy(sql`count(*) desc`);
 }
@@ -106,7 +106,7 @@ export async function completionsByWeek(user: User) {
     })
     .from(tasks)
     .innerJoin(projects, eq(projects.id, tasks.projectId))
-    .where(and(visibleProjects(user), isNotNull(tasks.completedAt), gte(tasks.completedAt, from)))
+    .where(and(visibleProjects(user), isNotNull(tasks.completedAt), gte(tasks.completedAt, from), isNull(tasks.deletedAt)))
     .groupBy(sql`date_trunc('week', ${tasks.completedAt})`);
 
   const counts = new Map(rows.map((r) => [r.week, r.n]));
@@ -128,7 +128,7 @@ export async function mostOverdue(user: User, limit = 5) {
     })
     .from(tasks)
     .innerJoin(projects, eq(projects.id, tasks.projectId))
-    .where(and(visibleProjects(user), ne(tasks.status, 'done'), lt(tasks.dueDate, todayISO())))
+    .where(and(visibleProjects(user), ne(tasks.status, 'done'), lt(tasks.dueDate, todayISO()), isNull(tasks.deletedAt)))
     .orderBy(tasks.dueDate)
     .limit(limit);
 }

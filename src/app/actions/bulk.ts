@@ -4,7 +4,7 @@ import { and, eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
 import { db } from '@/db';
-import { projectMembers, projects, taskAssignees, tasks, type TaskStatus } from '@/db/schema';
+import { projectMembers, taskAssignees, tasks, type TaskStatus } from '@/db/schema';
 import { logAssignment, logFieldChange } from '@/lib/activity';
 import { requireUser } from '@/lib/auth/session';
 import { canViewProject, isManager } from '@/lib/authz';
@@ -209,15 +209,4 @@ export async function bulkAssign(
 
 export async function bulkSetDueDate(taskIds: string[], dueDate: string | null): Promise<BulkResult> {
   return runBulk(taskIds, { kind: 'due_date', dueDate });
-}
-
-/** Used by the bulk toolbar to offer only people the selection could legally be assigned to. */
-export async function assignableForProjects(projectIds: string[]) {
-  const user = await requireUser();
-  if (projectIds.length === 0) return [];
-  const rows = await db
-    .select({ id: projectMembers.userId, projectId: projectMembers.projectId })
-    .from(projectMembers)
-    .innerJoin(projects, eq(projects.id, projectMembers.projectId));
-  return rows.filter((r) => projectIds.includes(r.projectId) && user);
 }

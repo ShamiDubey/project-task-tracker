@@ -193,6 +193,17 @@ export const tasks = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     /** Goal 6.7 sorts on this. Bumped by every mutation, including assignment changes. */
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    /**
+     * Goal 1.3 lets managers delete tasks. Goal 9.6 says nothing in the timeline can be deleted,
+     * *including by managers*. Those two collide: if deleting a task removed its rows, a manager
+     * could erase history simply by deleting the task it belonged to.
+     *
+     * So a delete is a soft delete. The task vanishes from every view — it is filtered out in the
+     * one place visibility is decided — and its timeline survives intact. This is the same pattern
+     * the brief already sanctions for projects, where archiving "hides it from the default views
+     * without destroying its data".
+     */
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },
   (t) => [
     unique('tasks_project_number_unique').on(t.projectId, t.number),
@@ -210,6 +221,7 @@ export const tasks = pgTable(
     index('tasks_due_date_idx').on(t.dueDate),
     index('tasks_updated_at_idx').on(t.updatedAt),
     index('tasks_completed_at_idx').on(t.completedAt),
+    index('tasks_deleted_at_idx').on(t.deletedAt),
 
     /**
      * Goal 4: `blocked_from_status` is set if and only if the task is Blocked. This makes the

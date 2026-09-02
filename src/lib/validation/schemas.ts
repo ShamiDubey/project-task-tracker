@@ -16,11 +16,18 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Password is required.'),
 });
 
+/**
+ * Note the absent `role`.
+ *
+ * Self-registration always creates a member. Letting a form choose its own role would have made
+ * Goal 1's whole manager/member split opt-in: anyone wanting portfolio-wide visibility would just
+ * sign up again and tick Manager. Managers are seeded, or promoted by an existing manager — a
+ * privilege is granted, never self-declared.
+ */
 export const registerSchema = z.object({
   email: emailSchema,
   name: z.string().trim().min(2, 'Please give your full name.').max(80),
   password: z.string().min(8, 'Use at least 8 characters.').max(200),
-  role: z.enum(['manager', 'member']),
 });
 
 export const projectSchema = z.object({

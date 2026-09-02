@@ -8,6 +8,13 @@
       "when": 1788171523654,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788327788329,
+      "tag": "0001_soft_delete_tasks",
+      "breakpoints": true
     }
   ]
 }
