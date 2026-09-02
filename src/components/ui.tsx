@@ -214,7 +214,7 @@ export function Card({
   return (
     <div
       className={cx(
-        'rounded-xl border border-line bg-surface',
+        'rounded-xl border border-line bg-surface transition-shadow duration-200',
         elevation === 1 && 'shadow-e1',
         elevation === 2 && 'shadow-e2',
         className,
@@ -304,9 +304,9 @@ type ButtonTone = 'primary' | 'secondary' | 'ghost' | 'danger';
 
 const BUTTON_TONES: Record<ButtonTone, string> = {
   primary:
-    'bg-accent text-on-accent shadow-e1 hover:bg-accent-hover active:scale-[0.985] disabled:opacity-50',
+    'sheen bg-accent text-on-accent shadow-e1 hover:bg-accent-hover hover:shadow-e2 active:scale-[0.97] disabled:opacity-50',
   secondary:
-    'bg-surface text-ink ring-1 ring-inset ring-line-strong hover:bg-surface-2 active:scale-[0.985]',
+    'bg-surface text-ink ring-1 ring-inset ring-line-strong hover:bg-surface-2 hover:ring-line-strong active:scale-[0.97]',
   ghost: 'text-ink-2 hover:bg-surface-2 hover:text-ink',
   danger:
     'bg-surface text-danger ring-1 ring-inset ring-danger-line hover:bg-danger-soft active:scale-[0.985]',
@@ -314,7 +314,7 @@ const BUTTON_TONES: Record<ButtonTone, string> = {
 
 export function buttonClass(tone: ButtonTone = 'primary', size: 'xs' | 'sm' | 'md' = 'md') {
   return cx(
-    'inline-flex items-center justify-center gap-1.5 rounded-lg font-medium transition-all duration-150 disabled:pointer-events-none disabled:opacity-55',
+    'inline-flex items-center justify-center gap-1.5 rounded-lg font-medium transition-all duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] disabled:pointer-events-none disabled:opacity-55',
     size === 'xs' ? 'px-2 py-1 text-2xs' : size === 'sm' ? 'px-2.5 py-1.5 text-xs' : 'px-3.5 py-2 text-sm',
     BUTTON_TONES[tone],
   );

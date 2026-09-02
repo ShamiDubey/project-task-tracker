@@ -38,12 +38,17 @@ export function TaskRowItem({
   return (
     <li
       className={cx(
-        'group relative flex items-start gap-3 px-4 py-2.5 transition-colors hover:bg-surface-2',
+        'group relative flex items-start gap-3 px-4 py-2.5 transition-colors duration-150 hover:bg-surface-2',
         overdue && 'bg-danger-soft/30',
       )}
     >
       {/* A hairline on overdue rows, so the exception is findable while scrolling fast. */}
       {overdue && <span aria-hidden className="absolute inset-y-0 left-0 w-[2px] bg-danger" />}
+      {/* A hairline that draws in from the left on hover — the row acknowledging the pointer. */}
+      <span
+        aria-hidden
+        className="absolute inset-y-0 left-0 w-[2px] origin-top scale-y-0 bg-accent transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-y-100"
+      />
 
       {selectable}
 

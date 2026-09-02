@@ -132,3 +132,48 @@ export async function mostOverdue(user: User, limit = 5) {
     .orderBy(tasks.dueDate)
     .limit(limit);
 }
+
+/**
+ * The last six weeks of net movement, for the sparklines under the headline figures. One query, one
+ * row per week, so four tiles cost one round trip rather than four.
+ */
+export async function recentTrend(user: User) {
+  const weeks = lastNWeeks(6);
+  const from = weeks[0].start;
+  const rows = await db
+    .select({
+      week: sql<string>`to_char(date_trunc('week', ${tasks.createdAt}), 'YYYY-MM-DD')`,
+      created: sql<number>`count(*)::int`,
+    })
+    .from(tasks)
+    .innerJoin(projects, eq(projects.id, tasks.projectId))
+    .where(and(visibleProjects(user), gte(tasks.createdAt, from), isNull(tasks.deletedAt)))
+    .groupBy(sql`date_trunc('week', ${tasks.createdAt})`);
+
+  const byWeek = new Map(rows.map((r) => [r.week, r.created]));
+  return weeks.map((w) => byWeek.get(toISODate(w.start)) ?? 0);
+}
+
+/**
+ * Per-project health for the portfolio strip — one row per project, so the whole portfolio reads as
+ * a single shape rather than a list to be scrolled.
+ */
+export async function portfolioHealth(user: User) {
+  return db
+    .select({
+      id: projects.id,
+      key: projects.key,
+      name: projects.name,
+      open: sql<number>`count(*) filter (where ${tasks.status} <> 'done')::int`,
+      overdue: sql<number>`count(*) filter (
+        where ${tasks.status} <> 'done' and ${tasks.dueDate} < ${todayISO()}
+      )::int`,
+      done: sql<number>`count(*) filter (where ${tasks.status} = 'done')::int`,
+      blocked: sql<number>`count(*) filter (where ${tasks.status} = 'blocked')::int`,
+    })
+    .from(projects)
+    .leftJoin(tasks, and(eq(tasks.projectId, projects.id), isNull(tasks.deletedAt)))
+    .where(visibleProjects(user))
+    .groupBy(projects.id, projects.key, projects.name)
+    .orderBy(sql`count(*) filter (where ${tasks.status} <> 'done' and ${tasks.dueDate} < ${todayISO()}) desc`);
+}

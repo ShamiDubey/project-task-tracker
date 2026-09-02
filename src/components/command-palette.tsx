@@ -120,7 +120,7 @@ export function CommandPalette({ items }: { items: PaletteItem[] }) {
     <>
       <PaletteTrigger onOpen={() => setOpen(true)} />
       <div
-        className="fixed inset-0 z-50 flex items-start justify-center bg-[rgb(16_24_40/0.45)] px-4 pt-[12vh] backdrop-blur-[2px]"
+        className="animate-pop fixed inset-0 z-50 flex items-start justify-center bg-[rgb(10_10_14/0.55)] px-4 pt-[12vh] backdrop-blur-sm"
         onClick={close}
         role="presentation"
       >
@@ -129,7 +129,7 @@ export function CommandPalette({ items }: { items: PaletteItem[] }) {
           aria-modal="true"
           aria-label="Command palette"
           onClick={(e) => e.stopPropagation()}
-          className="animate-pop w-full max-w-lg overflow-hidden rounded-xl border border-line bg-surface shadow-e3"
+          className="animate-pop w-full max-w-lg overflow-hidden rounded-2xl border border-line bg-surface/95 shadow-e3 backdrop-blur-xl"
         >
           <div className="flex items-center gap-2.5 border-b border-line px-3.5">
             <IconSearch className="h-4 w-4 shrink-0 text-ink-3" />
