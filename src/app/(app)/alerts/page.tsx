@@ -43,13 +43,14 @@ export default async function AlertsPage() {
         ) : (
           <ul className="divide-y divide-line">
             {alerts.map((alert) => (
-              <li key={alert.taskId} className="flex items-start gap-3 px-4 py-3">
+              <li key={alert.taskId} className="group relative flex items-start gap-3 px-4 py-3 transition-colors duration-150 hover:bg-surface-2">
+                <span aria-hidden className="absolute inset-y-0 left-0 w-[2px] origin-top scale-y-0 bg-danger transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-y-100" />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <Ref tone="accent">{taskRef(alert.projectKey, alert.number)}</Ref>
                     <Link
                       href={`/tasks/${alert.taskId}`}
-                      className="truncate text-sm font-medium text-ink hover:underline"
+                      className="truncate text-sm font-medium text-ink transition-colors group-hover:text-accent"
                     >
                       {alert.title}
                     </Link>

@@ -295,6 +295,84 @@ h1, h2, h3 {
 }
 .sheen:hover::after { transform: translateX(120%) skewX(-18deg); }
 
+/* --------------------------------------------------------------- 3D surfaces */
+
+/* A card that leans toward the pointer. `--rx`/`--ry` are written by the Tilt
+   component on pointermove, so the browser only ever recomposites — no layout,
+   no paint, and no React render per frame. */
+.tilt {
+  transform-style: preserve-3d;
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 380ms var(--ease-out-quint);
+  will-change: transform;
+}
+.tilt:hover { transition: transform 90ms linear; }
+
+/* A specular highlight that tracks the cursor across the surface. Sits above
+   the card but below its content, and never intercepts a click. */
+.tilt-glare { position: relative; }
+.tilt-glare::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 260ms var(--ease-out-quint);
+  background: radial-gradient(
+    340px circle at var(--mx, 50%) var(--my, 50%),
+    rgb(255 255 255 / 0.5),
+    transparent 62%
+  );
+  mix-blend-mode: soft-light;
+  z-index: 1;
+}
+.tilt-glare:hover::before { opacity: 1; }
+:root[data-theme='dark'] .tilt-glare::before {
+  background: radial-gradient(
+    340px circle at var(--mx, 50%) var(--my, 50%),
+    rgb(255 255 255 / 0.09),
+    transparent 62%
+  );
+  mix-blend-mode: screen;
+}
+
+/* A border that lights up where the cursor is, drawn as a masked gradient ring
+   so it works on any radius without a second element. */
+.edge-glow { position: relative; }
+.edge-glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 260ms var(--ease-out-quint);
+  background: radial-gradient(
+    260px circle at var(--mx, 50%) var(--my, 50%),
+    var(--accent),
+    transparent 60%
+  );
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+}
+.edge-glow:hover::after { opacity: 0.85; }
+
+/* The scroll-driven sign-in scene. Depth is real: layers sit at different Z and
+   the camera pulls through them as the page scrolls. */
+.scene {
+  perspective: 1100px;
+  perspective-origin: 50% 45%;
+  transform-style: preserve-3d;
+}
+.scene-layer {
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+}
+
 /* Lift on hover, settle on press. */
 .lift {
   transition: transform 180ms var(--ease-out-quint), box-shadow 180ms var(--ease-out-quint);
@@ -333,3 +411,8 @@ h1, h2, h3 {
 
 /* Wide content scrolls inside itself rather than pushing the page sideways. */
 .scroll-x { overflow-x: auto; }
+
+@keyframes scroll-cue {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(300%); }
+}

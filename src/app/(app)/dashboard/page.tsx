@@ -3,6 +3,8 @@ import type { CSSProperties } from 'react';
 
 import { CompletionsChart } from '@/components/completions-chart';
 import { Counter, Sparkline } from '@/components/counter';
+import { DashboardHero } from '@/components/dashboard-hero';
+import { Tilt } from '@/components/motion';
 import { IconArrowRight } from '@/components/icons';
 import {
   Avatar,
@@ -10,13 +12,12 @@ import {
   CardHeader,
   EmptyState,
   OverdueBadge,
-  PageHeader,
   PriorityBadge,
   Ref,
   cx,
 } from '@/components/ui';
 import { requireUser } from '@/lib/auth/session';
-import { relativeDue } from '@/lib/dates';
+import { relativeDue, todayISO } from '@/lib/dates';
 import {
   completionsByWeek,
   countsByStatus,
@@ -51,39 +52,41 @@ function Stat({
 }) {
   const alarmed = tone === 'danger' && value > 0;
   const inner = (
-    <div
-      style={delay(i)}
-      className={cx(
-        'reveal lift group relative h-full overflow-hidden rounded-xl border bg-surface px-4 py-3.5 shadow-e1',
-        alarmed ? 'border-danger-line' : 'border-line',
-        href && 'hover:shadow-e2',
-      )}
-    >
-      {/* A tint that only appears on the tile that needs attention. */}
-      {alarmed && (
-        <span
-          aria-hidden
-          className="pointer-events-none absolute -right-8 -top-10 h-24 w-24 rounded-full bg-danger opacity-[0.07] blur-2xl"
-        />
-      )}
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-xs font-medium text-ink-2">{label}</p>
-        {href && (
-          <IconArrowRight className="h-3.5 w-3.5 -translate-x-1 text-ink-3 opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100" />
+    <Tilt max={5} className="h-full">
+      <div
+        style={delay(i)}
+        className={cx(
+          'reveal edge-glow group relative h-full overflow-hidden rounded-xl border bg-surface px-4 py-3.5 shadow-e1 transition-shadow duration-200',
+          alarmed ? 'border-danger-line' : 'border-line',
+          href && 'hover:shadow-e2',
         )}
-      </div>
-      <div className="mt-1.5 flex items-end justify-between gap-3">
-        <Counter
-          value={value}
-          className={cx(
-            'text-[30px] font-semibold leading-none tracking-tight',
-            alarmed ? 'text-danger' : tone === 'good' ? 'text-good' : 'text-ink',
+      >
+      {/* A tint that only appears on the tile that needs attention. */}
+        {alarmed && (
+          <span
+            aria-hidden
+            className="pointer-events-none absolute -right-8 -top-10 h-24 w-24 rounded-full bg-danger opacity-[0.07] blur-2xl"
+          />
+        )}
+        <div className="relative z-[2] flex items-center justify-between gap-2">
+          <p className="text-xs font-medium text-ink-2">{label}</p>
+          {href && (
+            <IconArrowRight className="h-3.5 w-3.5 -translate-x-1 text-ink-3 opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100" />
           )}
-        />
-        {trend && <Sparkline points={trend} tone={tone === 'neutral' ? 'accent' : tone} />}
+        </div>
+        <div className="relative z-[2] mt-1.5 flex items-end justify-between gap-3">
+          <Counter
+            value={value}
+            className={cx(
+              'text-[30px] font-semibold leading-none tracking-tight',
+              alarmed ? 'text-danger' : tone === 'good' ? 'text-good' : 'text-ink',
+            )}
+          />
+          {trend && <Sparkline points={trend} tone={tone === 'neutral' ? 'accent' : tone} />}
+        </div>
+        {note && <p className="mt-2 text-2xs text-ink-3">{note}</p>}
       </div>
-      {note && <p className="mt-2 text-2xs text-ink-3">{note}</p>}
-    </div>
+    </Tilt>
   );
   return href ? (
     <Link href={href} className="block h-full">
@@ -110,21 +113,36 @@ export default async function DashboardPage() {
   const statusMap = new Map(byStatus.map((r) => [r.status, r.n]));
   const totalTasks = byStatus.reduce((sum, r) => sum + r.n, 0);
   const busiest = byAssignee[0]?.open ?? 0;
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
   const completionTrend = completions.slice(-6).map((c) => c.count);
+
+  // The single thing most worth doing first: whatever has been late the longest.
+  const worst = overdue[0];
+  const focus = worst
+    ? {
+        id: worst.id,
+        ref: taskRef(worst.projectKey, worst.number),
+        title: worst.title,
+        project: worst.projectKey,
+        daysLate: Math.max(
+          1,
+          Math.round(
+            (new Date(`${todayISO()}T00:00:00`).getTime() -
+              new Date(`${worst.dueDate}T00:00:00`).getTime()) / 86400000,
+          ),
+        ),
+      }
+    : null;
 
   return (
     <>
       <div className="reveal" style={delay(0)}>
-        <PageHeader
-          eyebrow={user.role === 'manager' ? 'Portfolio' : 'Your projects'}
-          title={`${greeting}, ${user.name.split(' ')[0]}`}
-          subtitle={
-            headline.overdueTasks > 0
-              ? `${headline.overdueTasks} ${headline.overdueTasks === 1 ? 'task is' : 'tasks are'} past due, and ${headline.dueThisWeek} more ${headline.dueThisWeek === 1 ? 'lands' : 'land'} this week.`
-              : 'Nothing is overdue. Here is where the work stands.'
-          }
+        <DashboardHero
+          name={user.name}
+          role={user.role}
+          overdue={headline.overdueTasks}
+          dueThisWeek={headline.dueThisWeek}
+          openTasks={headline.openTasks}
+          focus={focus}
         />
       </div>
 

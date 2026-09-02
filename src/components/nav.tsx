@@ -24,7 +24,7 @@ export function NavLinks({ items, dense = false }: { items: NavItem[]; dense?: b
             href={item.href}
             aria-current={active ? 'page' : undefined}
             className={cx(
-              'group relative flex items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-sm transition-colors duration-150',
+              'group relative flex items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-sm transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:translate-x-0.5',
               active ? 'bg-accent-soft font-medium text-accent' : 'text-ink-2 hover:bg-surface-2 hover:text-ink',
             )}
           >
@@ -32,11 +32,16 @@ export function NavLinks({ items, dense = false }: { items: NavItem[]; dense?: b
             <span
               aria-hidden
               className={cx(
-                'absolute left-0 top-1/2 h-4 w-[2px] -translate-y-1/2 rounded-r-full bg-accent transition-opacity duration-150',
-                active ? 'opacity-100' : 'opacity-0',
+                'absolute left-0 top-1/2 w-[2px] -translate-y-1/2 rounded-r-full bg-accent transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
+                active ? 'h-4 opacity-100' : 'h-0 opacity-0',
               )}
             />
-            <span className={cx('shrink-0', active ? 'text-accent' : 'text-ink-3 group-hover:text-ink-2')}>
+            <span
+              className={cx(
+                'shrink-0 transition-transform duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-110',
+                active ? 'text-accent' : 'text-ink-3 group-hover:text-ink-2',
+              )}
+            >
               {item.icon}
             </span>
             {!dense && <span className="flex-1 truncate">{item.label}</span>}
