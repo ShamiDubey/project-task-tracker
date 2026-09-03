@@ -18,11 +18,21 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
     <html lang="en" className={`${sans.variable} ${mono.variable} h-full`} suppressHydrationWarning>
-      <head>
-        {/* Applies the stored theme before first paint, so there is no flash of the wrong one. */}
-        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
-      </head>
-      <body className="min-h-full font-sans">{children}</body>
+      <body className="min-h-full font-sans">
+        {/*
+         * Applies the stored theme before first paint, so a viewer who chose dark never sees a
+         * flash of the light palette.
+         *
+         * It has to run synchronously before the browser paints, which is what `beforeInteractive`
+         * guarantees. Using next/script rather than a raw <script> in the tree also avoids React's
+         * warning that script elements are not re-executed on client navigation — true, and
+         * irrelevant here, since the theme only needs applying once per document load.
+         */}
+        <Script id="theme-boot" strategy="beforeInteractive">
+          {themeBootScript}
+        </Script>
+        {children}
+      </body>
     </html>
   );
 }
