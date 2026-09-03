@@ -177,7 +177,7 @@ export default async function DashboardPage() {
                     className="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-2"
                   >
                     <Ref tone="accent">{p.key}</Ref>
-                    <span className="w-40 shrink-0 truncate text-sm text-ink transition-colors group-hover:text-accent">
+                    <span className="w-24 shrink-0 truncate text-sm text-ink transition-colors group-hover:text-accent sm:w-40">
                       {p.name}
                     </span>
                     <span className="flex h-2.5 flex-1 gap-px overflow-hidden rounded-full bg-sunk">
@@ -202,7 +202,7 @@ export default async function DashboardPage() {
                         title={`${p.done} done`}
                       />
                     </span>
-                    <span className="w-24 shrink-0 text-right text-2xs text-ink-3">
+                    <span className="hidden w-24 shrink-0 text-right text-2xs text-ink-3 sm:block">
                       <span data-metric className="font-medium text-ink-2">{p.open}</span> open
                       {p.overdue > 0 && (
                         <span data-metric className="ml-1.5 font-medium text-danger">{p.overdue} late</span>
@@ -216,8 +216,8 @@ export default async function DashboardPage() {
         </Card>
       </section>
 
-      <section className="mt-4 grid gap-4 lg:grid-cols-5">
-        <div className="reveal lg:col-span-3" style={delay(6)}>
+      <section className="mt-4 grid min-w-0 gap-4 lg:grid-cols-5">
+        <div className="reveal min-w-0 lg:col-span-3" style={delay(6)}>
           <Card className="h-full">
             <CardHeader
               title="Throughput"
@@ -227,7 +227,7 @@ export default async function DashboardPage() {
           </Card>
         </div>
 
-        <div className="reveal lg:col-span-2" style={delay(7)}>
+        <div className="reveal min-w-0 lg:col-span-2" style={delay(7)}>
           <Card className="h-full">
             <CardHeader title="By status" subtitle={`${totalTasks} tasks in view`} />
             <ul className="divide-y divide-line">
@@ -240,7 +240,7 @@ export default async function DashboardPage() {
                       href={`/tasks?status=${status}`}
                       className="group flex items-center gap-3 px-4 py-[11px] transition-colors hover:bg-surface-2"
                     >
-                      <span className="w-[104px] shrink-0 text-xs text-ink-2 transition-colors group-hover:text-ink">
+                      <span className="w-20 shrink-0 text-xs text-ink-2 transition-colors group-hover:text-ink sm:w-[104px]">
                         {STATUS_LABELS[status]}
                       </span>
                       <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-sunk">
@@ -261,8 +261,8 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      <section className="mt-4 grid gap-4 lg:grid-cols-2">
-        <div className="reveal" style={delay(8)}>
+      <section className="mt-4 grid min-w-0 gap-4 lg:grid-cols-2">
+        <div className="reveal min-w-0" style={delay(8)}>
           <Card className="h-full">
             <CardHeader title="Who is carrying what" subtitle="Open tasks per person. The red segment is already late." />
             {byAssignee.length === 0 ? (
@@ -276,7 +276,7 @@ export default async function DashboardPage() {
                       className="group flex items-center gap-3 px-4 py-[11px] transition-colors hover:bg-surface-2"
                     >
                       <Avatar name={person.name} size="sm" />
-                      <span className="w-28 shrink-0 truncate text-sm text-ink">{person.name}</span>
+                      <span className="w-20 shrink-0 truncate text-sm text-ink sm:w-28">{person.name}</span>
                       <span className="flex h-2 flex-1 overflow-hidden rounded-full bg-sunk">
                         <span
                           className="reveal-line h-full bg-danger"
@@ -299,7 +299,7 @@ export default async function DashboardPage() {
           </Card>
         </div>
 
-        <div className="reveal" style={delay(9)}>
+        <div className="reveal min-w-0" style={delay(9)}>
           <Card className="h-full">
             <CardHeader
               title="Late the longest"

@@ -13,14 +13,42 @@ import { firstError, projectEditSchema, projectSchema } from '@/lib/validation/s
 
 export type ActionState = { error?: string; ok?: string } | undefined;
 
-/** Turns the two expected failure kinds into a message the form can show. */
+/**
+ * Flattens an error into searchable text.
+ *
+ * Drizzle wraps a driver error in its own, putting the Postgres message on `cause`, so a plain
+ * `err.message.includes('...')` never sees the constraint name. Postgres also exposes the offending
+ * constraint on a `constraint` property, which is the most reliable signal of the three — hence
+ * walking the chain and collecting all of them.
+ */
+function errorText(err: unknown): string {
+  const parts: string[] = [];
+  let current: unknown = err;
+  for (let depth = 0; depth < 5 && current; depth++) {
+    if (current instanceof Error) {
+      parts.push(current.message);
+      const constraint = (current as { constraint?: unknown }).constraint;
+      if (typeof constraint === 'string') parts.push(constraint);
+      current = (current as { cause?: unknown }).cause;
+    } else {
+      parts.push(String(current));
+      break;
+    }
+  }
+  return parts.join(' | ');
+}
+
+/** Turns the expected failure kinds into a message the form can show. */
 function toMessage(err: unknown): string {
   if (err instanceof AuthzError) return err.message;
-  const message = err instanceof Error ? err.message : String(err);
-  if (message.includes('projects_key_unique')) return 'That project key is already in use.';
-  if (message.includes('projects_key_format')) {
+  const text = errorText(err);
+  if (text.includes('projects_key_unique') || /duplicate key.*projects/i.test(text)) {
+    return 'That project key is already in use. Pick another.';
+  }
+  if (text.includes('projects_key_format')) {
     return 'Use 2–10 letters or digits, starting with a letter, e.g. ACME.';
   }
+  if (text.includes('project_members_pkey')) return 'That person is already on this project.';
   console.error(err);
   return 'Something went wrong. Please try again.';
 }

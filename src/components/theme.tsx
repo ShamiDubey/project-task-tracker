@@ -120,6 +120,13 @@ export function ThemeToggle() {
             role="radio"
             aria-checked={active}
             title={option.label}
+            /*
+             * The server cannot know which theme this viewer picked — it lives in their
+             * localStorage — so the server snapshot is always "system" and the first client render
+             * may legitimately disagree about which button is selected. That is a real difference,
+             * not a bug, and it is confined to this control's own attributes.
+             */
+            suppressHydrationWarning
             onClick={() => choose(option.value)}
             className={`flex h-6 w-7 items-center justify-center rounded-md transition-colors duration-150 ${
               active

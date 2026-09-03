@@ -14,7 +14,8 @@
     "test:goals": "node --env-file=.env tests/goals.test.mjs",
     "test:rules": "node --env-file=.env tests/constraints.test.mjs",
     "test:state": "tsx tests/state-machine.test.ts",
-    "test": "npm run test:state && npm run test:rules && npm run test:goals"
+    "test": "npm run test:state && npm run test:rules && npm run test:goals && npm run test:browser",
+    "test:browser": "npm run db:seed --silent && node tests/browser.test.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
@@ -40,6 +41,7 @@
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.3.3",
+    "playwright": "^1.58.2",
     "tailwindcss": "^4",
     "tsx": "^4.23.13",
     "typescript": "^5"

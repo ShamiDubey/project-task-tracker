@@ -30,16 +30,44 @@ import { commentSchema, firstError, taskSchema } from '@/lib/validation/schemas'
 
 export type ActionState = { error?: string; ok?: string } | undefined;
 
+/**
+ * Flattens an error into searchable text.
+ *
+ * Drizzle wraps a driver error in its own, putting the Postgres message on `cause`, so a plain
+ * `err.message.includes('...')` never sees the constraint name. Postgres also exposes the offending
+ * constraint on a `constraint` property, which is the most reliable signal of the three — hence
+ * walking the chain and collecting all of them.
+ */
+function errorText(err: unknown): string {
+  const parts: string[] = [];
+  let current: unknown = err;
+  for (let depth = 0; depth < 5 && current; depth++) {
+    if (current instanceof Error) {
+      parts.push(current.message);
+      const constraint = (current as { constraint?: unknown }).constraint;
+      if (typeof constraint === 'string') parts.push(constraint);
+      current = (current as { cause?: unknown }).cause;
+    } else {
+      parts.push(String(current));
+      break;
+    }
+  }
+  return parts.join(' | ');
+}
+
 function toMessage(err: unknown): string {
   if (err instanceof AuthzError) return err.message;
-  const message = err instanceof Error ? err.message : String(err);
-  if (message.includes('task_assignees_membership_fk')) {
+  const text = errorText(err);
+  if (text.includes('task_assignees_membership_fk')) {
     return 'That person is not a member of this project, so they cannot be assigned to its tasks.';
   }
-  if (message.includes('task_dependencies_task_fk') || message.includes('task_dependencies_blocking_fk')) {
+  if (text.includes('task_dependencies_task_fk') || text.includes('task_dependencies_blocking_fk')) {
     return 'A task can only be blocked by another task in the same project.';
   }
-  if (message.includes('task_dependencies_no_self_block')) return 'A task cannot block itself.';
+  if (text.includes('task_dependencies_no_self_block')) return 'A task cannot block itself.';
+  if (text.includes('tasks_blocked_state_consistent') || text.includes('tasks_completed_at_consistent')) {
+    return 'That would leave the task in an inconsistent state. Reload and try again.';
+  }
   console.error(err);
   return 'Something went wrong. Please try again.';
 }
