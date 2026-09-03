@@ -11,7 +11,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx src/db/seed.ts",
-    "test:goals": "node --env-file=.env tests/goals.test.mjs",
+    "test:goals": "npm run db:seed --silent && node --env-file=.env tests/goals.test.mjs",
     "test:rules": "node --env-file=.env tests/constraints.test.mjs",
     "test:state": "tsx tests/state-machine.test.ts",
     "test": "npm run test:state && npm run test:rules && npm run test:goals && npm run test:browser",

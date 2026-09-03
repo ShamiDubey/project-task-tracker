@@ -7,8 +7,11 @@
  * because "enforced on the server, not just hidden in the interface" is only demonstrated by asking
  * the server directly.
  *
+ * Assumes the demo seed, so `npm run test:goals` re-seeds first. Several checks compare a page's
+ * reported total against a count from the database, and both have to be looking at the same data.
+ *
  *   npm run dev          # in one terminal
- *   npm run test:goals   # in another
+ *   npm run test:goals   # in another — re-seeds, then checks
  */
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
