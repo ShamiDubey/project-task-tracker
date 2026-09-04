@@ -12,6 +12,7 @@ import {
   Ref,
 } from '@/components/ui';
 import { requireUser } from '@/lib/auth/session';
+import { isUuid } from '@/lib/validation/schemas';
 import { canViewProject, isManager } from '@/lib/authz';
 import { getProject, listProjectMembers } from '@/lib/queries/projects';
 import { listTasks } from '@/lib/queries/tasks';
@@ -21,6 +22,10 @@ import { NewTaskForm } from './new-task-form';
 export default async function ProjectPage({ params }: PageProps<'/projects/[id]'>) {
   const user = await requireUser();
   const { id } = await params;
+
+  // A route parameter is arbitrary text. Anything that is not a UUID cannot identify a row, so
+  // it is not found rather than a failed query.
+  if (!isUuid(id)) notFound();
 
   // Goal 1.5 — a member who guesses a project id gets the same 404 as one that does not exist.
   if (!(await canViewProject(user, id))) notFound();

@@ -12,6 +12,7 @@ import {
   StatusBadge,
 } from '@/components/ui';
 import { requireUser } from '@/lib/auth/session';
+import { isUuid } from '@/lib/validation/schemas';
 import { canViewProject, isManager, isProjectMember } from '@/lib/authz';
 import { isOverdue, longDateTime, relativeDue, shortDate } from '@/lib/dates';
 import { listProjectMembers } from '@/lib/queries/projects';
@@ -39,6 +40,10 @@ import { Timeline } from './timeline';
 export default async function TaskPage({ params }: PageProps<'/tasks/[id]'>) {
   const user = await requireUser();
   const { id } = await params;
+
+  // A route parameter is arbitrary text. Anything that is not a UUID cannot identify a row, so
+  // it is not found rather than a failed query.
+  if (!isUuid(id)) notFound();
 
   const task = await getTask(id);
   if (!task) notFound();

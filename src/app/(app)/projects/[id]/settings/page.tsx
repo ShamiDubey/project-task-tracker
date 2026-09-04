@@ -2,6 +2,7 @@ import { notFound, redirect } from 'next/navigation';
 
 import { Card, CardHeader, PageHeader, Ref } from '@/components/ui';
 import { requireUser } from '@/lib/auth/session';
+import { isUuid } from '@/lib/validation/schemas';
 import { isManager } from '@/lib/authz';
 import { getProject, listAllUsers, listProjectMembers } from '@/lib/queries/projects';
 
@@ -12,6 +13,10 @@ export default async function ProjectSettingsPage({
 }: PageProps<'/projects/[id]/settings'>) {
   const user = await requireUser();
   const { id } = await params;
+
+  // A route parameter is arbitrary text. Anything that is not a UUID cannot identify a row, so
+  // it is not found rather than a failed query.
+  if (!isUuid(id)) notFound();
 
   // Every mutation on this page re-checks the role on the server too. This redirect is only so a
   // member does not see a page full of controls that would all refuse them.

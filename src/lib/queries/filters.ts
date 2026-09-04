@@ -7,6 +7,7 @@
  * instead of shipping everything to the browser to be filtered there.
  */
 import type { TaskPriority, TaskStatus } from '@/db/schema';
+import { isUuid } from '@/lib/validation/schemas';
 import { OPEN_STATUSES } from '@/lib/task-status';
 
 import type { SortDir, SortKey, TaskFilters } from './tasks';
@@ -41,9 +42,10 @@ export function parseFilters(params: Params): TaskFilters {
 
   return {
     q: one(params, 'q'),
-    projectId: one(params, 'project'),
+    // Ignored rather than passed on: an id that cannot identify a row is not a filter.
+    projectId: isUuid(one(params, 'project')) ? one(params, 'project') : undefined,
     statuses: statuses.length ? statuses : undefined,
-    assigneeId: one(params, 'assignee'),
+    assigneeId: isUuid(one(params, 'assignee')) ? one(params, 'assignee') : undefined,
     priorities: many(params, 'priority').filter((p) =>
       PRIORITIES.includes(p as TaskPriority),
     ) as TaskPriority[],

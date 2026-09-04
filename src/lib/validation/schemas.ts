@@ -63,3 +63,17 @@ export const commentSchema = z.object({
 export function firstError(error: z.ZodError): string {
   return error.issues[0]?.message ?? 'That input was not valid.';
 }
+
+/**
+ * Is this string shaped like a UUID?
+ *
+ * Route parameters arrive as arbitrary text. Passing one straight into a comparison against a `uuid`
+ * column makes Postgres throw "invalid input syntax for type uuid", which surfaces as a 500 — so a
+ * mistyped or stale link crashed the page instead of returning "not found". Checked at the boundary
+ * so the query layer can keep assuming its inputs are well-formed.
+ */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export function isUuid(value: string | undefined | null): value is string {
+  return typeof value === 'string' && UUID.test(value);
+}

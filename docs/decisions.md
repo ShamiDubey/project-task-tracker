@@ -195,3 +195,21 @@ as they were made, not reconstructed at the end.
   test asserting that a member gets a 404 on a project they are not on, which I nearly did not re-run
   after a change that was "only styling".
 
+
+---
+
+## Decision 12 — Route parameters are validated before they reach the database
+
+- **Chose:** an `isUuid()` guard at the top of every dynamic route, and the same check when parsing
+  `project` and `assignee` out of the query string. A malformed id is *not found*, not an error.
+- **Rejected:** catching the driver error and translating it, which would have worked but leaves the
+  bad value travelling one layer further than it should.
+- **Why:** `/projects/not-a-uuid` returned **500**. The parameter went straight into a comparison
+  against a `uuid` column, Postgres raised *invalid input syntax for type uuid*, and nothing caught
+  it — so a mistyped or stale link crashed the page instead of returning "not found". Found by
+  sweeping every route with hostile input rather than by anything going wrong in normal use, which is
+  the point of sweeping.
+- **Where the line is:** this is the same rule the rest of the codebase follows — parse at the
+  boundary, and after the parse the data is trusted. Route parameters were the one boundary I had
+  left unguarded, because they *look* like they come from the application rather than from a user.
+  They do not.
