@@ -290,6 +290,20 @@ await check('5.4 My tasks spans more than one project', async () => {
 /* ---------------------------------------------------------------- goal 6 */
 heading('GOAL 6 — finding things, on the server');
 const allTasks = await body('/tasks', manager.cookie);
+/**
+ * Counts rows the way the application does.
+ *
+ * Note `TODAY` rather than SQL's `current_date`: the app decides "overdue" against the business
+ * timezone, and current_date is the database's. When those differ — which they do for part of every
+ * day — the two disagree by a task, and it is the test that is wrong, not the page.
+ */
+const TODAY = new Intl.DateTimeFormat('en-CA', {
+  timeZone: process.env.BUSINESS_TIMEZONE ?? 'UTC',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+}).format(new Date());
+
 const visibleCount = async (where) => {
   const [{ n }] = await sql`
     select count(*)::int n from tasks t join projects p on p.id=t.project_id
@@ -324,7 +338,7 @@ await check('6.5 filter by priority', async () => {
 });
 await check('6.6 filter by overdue', async () => {
   const shown = totalMatches(await body('/tasks?overdue=1', manager.cookie));
-  const expected = await visibleCount("t.status <> 'done' and t.due_date < current_date");
+  const expected = await visibleCount(`t.status <> 'done' and t.due_date < '${TODAY}'`);
   return shown === expected || `${shown} vs ${expected}`;
 });
 await check('6.7 all three sorts render', async () => {
@@ -401,7 +415,7 @@ await check('7.6 CSV downloads as a file', async () => {
 await check('7.6 CSV contains exactly the filtered rows', async () => {
   const rows = (await (await get('/api/tasks/export?overdue=1', manager.cookie)).text())
     .trim().split('\r\n').slice(1);
-  const expected = await visibleCount("t.status <> 'done' and t.due_date < current_date");
+  const expected = await visibleCount(`t.status <> 'done' and t.due_date < '${TODAY}'`);
   return (rows.length === expected && rows.every((r) => r.includes(',yes,'))) ||
     `${rows.length} rows, expected ${expected}`;
 });
@@ -477,7 +491,7 @@ await check('9.6 deleting a task does not destroy its history', async () => {
 heading('GOAL 10 — overdue alerts');
 await check('10.1 the alerts page lists overdue, unfinished tasks', async () => {
   const html = await body('/alerts', manager.cookie);
-  const expected = await visibleCount("t.status <> 'done' and t.due_date < current_date");
+  const expected = await visibleCount(`t.status <> 'done' and t.due_date < '${TODAY}'`);
   return html.includes(`${expected} open alert`) || `page did not report ${expected}`;
 });
 await check('10.2 a count badge appears in the navigation', async () =>
@@ -489,11 +503,11 @@ await check('10.3 Dismiss is offered only for the viewer’s own tasks', async (
 });
 await check('10.4 a dismissal dies when the due date changes, and only then', async () => {
   const [t] = await sql`
-    select t.id, t.due_date from tasks t
+    select t.id, t.due_date::text as due_date from tasks t
     join task_assignees ta on ta.task_id = t.id
     join projects p on p.id = t.project_id
     where ta.user_id = ${member.id} and t.status <> 'done'
-      and t.due_date < current_date and t.deleted_at is null and p.archived_at is null
+      and t.due_date < ${TODAY} and t.deleted_at is null and p.archived_at is null
     limit 1`;
   if (!t) return 'no overdue task assigned to the member';
   const count = async () =>
@@ -504,10 +518,16 @@ await check('10.4 a dismissal dies when the due date changes, and only then', as
             values (${member.id}, ${t.id}, ${t.due_date})
             on conflict (user_id, task_id) do update set dismissed_due_date = excluded.dismissed_due_date`;
   const afterDismiss = await count();
-  const moved = new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10);
+  // Derived from the task's own due date, so it is guaranteed to differ. Picking a fixed offset
+  // like "three days ago" can land on the value the task already has, in which case nothing changes
+  // and the dismissal correctly survives — a passing product looking like a failure.
+  const dueISO = t.due_date; // already YYYY-MM-DD, thanks to the ::text cast above
+  const moved = new Date(new Date(`${dueISO}T00:00:00Z`).getTime() - 86400000)
+    .toISOString()
+    .slice(0, 10);
   await sql`update tasks set due_date = ${moved} where id = ${t.id}`;
   const afterMove = await count();
-  await sql`update tasks set due_date = ${t.due_date} where id = ${t.id}`;
+  await sql`update tasks set due_date = ${dueISO} where id = ${t.id}`;
   const afterMoveBack = await count();
   await sql`delete from alert_dismissals where user_id = ${member.id} and task_id = ${t.id}`;
 

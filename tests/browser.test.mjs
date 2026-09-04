@@ -161,12 +161,15 @@ await check('light theme comes back', async () => {
 heading('Command palette');
 await check('⌘K opens it and finds a task', async () => {
   await page.keyboard.press('Meta+k');
-  await page.waitForTimeout(400);
+  await page.waitForSelector('[role="dialog"]', { timeout: 10000 });
+  // The index is fetched on first open rather than shipped with every page, so wait for it to
+  // land before searching. The static destinations are matchable immediately; tasks are not.
+  await until(async () => !(await page.locator('text=indexing…').count()), { timeout: 15000 });
   await page.keyboard.type('checkout');
-  await page.waitForTimeout(400);
+  await until(async () => (await page.locator('[role="dialog"] li').count()) > 0);
   await shot('05-palette');
   const count = await page.locator('[role="dialog"] li').count();
-  return count > 0 || 'no results';
+  return count > 0 || 'no results after the index loaded';
 });
 await check('Enter navigates to the highlighted result', async () => {
   await page.keyboard.press('Enter');

@@ -39,13 +39,29 @@ const PAGES: PaletteItem[] = [
  * somewhere in the low thousands of tasks, at which point this becomes a debounced server search —
  * the same fetch the list page already does.
  */
-export function CommandPalette({ items }: { items: PaletteItem[] }) {
+export function CommandPalette() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [cursor, setCursor] = useState(0);
+  const [items, setItems] = useState<PaletteItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const loaded = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+
+  // Fetched the first time the palette opens, then kept for the life of the page. The static pages
+  // below are available immediately, so the palette is never empty while the index is in flight.
+  useEffect(() => {
+    if (!open || loaded.current) return;
+    loaded.current = true;
+    setLoading(true);
+    fetch('/api/palette')
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: PaletteItem[]) => setItems(data))
+      .catch(() => setItems([]))
+      .finally(() => setLoading(false));
+  }, [open]);
 
   const all = useMemo(() => [...PAGES, ...items], [items]);
 
@@ -151,7 +167,7 @@ export function CommandPalette({ items }: { items: PaletteItem[] }) {
 
           {results.length === 0 ? (
             <p className="px-4 py-8 text-center text-sm text-ink-2">
-              Nothing matches “{query}”.
+              {loading ? 'Loading…' : `Nothing matches “${query}”.`}
             </p>
           ) : (
             <ul ref={listRef} className="max-h-80 overflow-y-auto p-1.5">
@@ -197,7 +213,9 @@ export function CommandPalette({ items }: { items: PaletteItem[] }) {
             <span className="flex items-center gap-1">
               <kbd className="rounded border border-line bg-surface px-1 font-mono">↵</kbd> open
             </span>
-            <span className="ml-auto">{results.length} of {all.length}</span>
+            <span className="ml-auto">
+              {loading ? 'indexing…' : `${results.length} of ${all.length}`}
+            </span>
           </div>
         </div>
       </div>

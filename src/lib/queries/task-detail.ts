@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { and, asc, eq, isNull, ne } from 'drizzle-orm';
+import { cache } from 'react';
 import { alias } from 'drizzle-orm/pg-core';
 
 import { db } from '@/db';
@@ -16,7 +17,14 @@ import {
 import type { BlockerRef } from '@/lib/task-status';
 import { taskRef } from '@/lib/task-status';
 
-export async function getTask(taskId: string) {
+/**
+ * Wrapped in React's `cache` so repeated calls inside one request hit the database once.
+ *
+ * The task page needs the task, and so does `transitionContext`, and so does the authorisation
+ * check — three call sites that each used to issue their own query. At 300ms per round trip to a
+ * database on another continent, that was most of a second of pure duplication on every page load.
+ */
+export const getTask = cache(async function getTask(taskId: string) {
   const [row] = await db
     .select({
       id: tasks.id,
@@ -40,10 +48,11 @@ export async function getTask(taskId: string) {
     .where(and(eq(tasks.id, taskId), isNull(tasks.deletedAt)))
     .limit(1);
   return row ?? null;
-}
+});
 
-/** The blockers of a task, with enough detail to name them in a rejection message. */
-export async function getBlockers(taskId: string) {
+/** The blockers of a task, with enough detail to name them in a rejection message. Deduplicated:
+ *  the page renders them and `transitionContext` reads them to decide whether Done is legal. */
+export const getBlockers = cache(async function getBlockers(taskId: string) {
   const blocker = alias(tasks, 'blocker');
   const rows = await db
     .select({
@@ -59,7 +68,7 @@ export async function getBlockers(taskId: string) {
     .where(eq(taskDependencies.taskId, taskId))
     .orderBy(asc(blocker.number));
   return rows;
-}
+});
 
 /** The tasks this one is blocking — the reverse direction, shown on the detail page. */
 export async function getBlocking(taskId: string) {

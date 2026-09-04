@@ -10,6 +10,7 @@
 import 'server-only';
 
 import { and, eq } from 'drizzle-orm';
+import { cache } from 'react';
 
 import { db } from '@/db';
 import { projectMembers, type User } from '@/db/schema';
@@ -34,14 +35,21 @@ export function requireManager(user: User, action = 'perform this action'): void
   }
 }
 
-export async function isProjectMember(user: User, projectId: string): Promise<boolean> {
+/**
+ * Cached per request. Visibility, write access and the page body each ask the same question, and
+ * without this every one of them paid for its own round trip.
+ */
+export const isProjectMember = cache(async function isProjectMember(
+  user: User,
+  projectId: string,
+): Promise<boolean> {
   const [row] = await db
     .select({ userId: projectMembers.userId })
     .from(projectMembers)
     .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, user.id)))
     .limit(1);
   return Boolean(row);
-}
+});
 
 /**
  * Goal 1.5: members only see projects they belong to. Managers see the whole portfolio — that is

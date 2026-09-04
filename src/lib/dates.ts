@@ -1,14 +1,31 @@
 /**
  * Date helpers.
  *
- * Due dates are stored as a `date` (a calendar day, no time, no zone) because "past its due date" is
- * a calendar question. Everything here works in the server's local day so that "overdue", "this
- * week" and the eight-week chart all agree with each other.
+ * Due dates are stored as a `date` — a calendar day, no time, no zone — because "past its due date"
+ * is a calendar question, not an instant.
+ *
+ * Which calendar, though, is a real decision. "Overdue" has to be one shared fact: if it were
+ * computed per viewer, two colleagues would see different overdue counts and the dashboard could not
+ * answer "what is overdue" at all — it would only answer "what is overdue for you". And if it were
+ * left to the server's own locale, the answer would silently change the day this deploys to a
+ * different region: on my machine (IST) and on Vercel (UTC) the same data gives different counts for
+ * five and a half hours out of every day. That is exactly the bug this constant exists to prevent.
+ *
+ * So it is the *company's* working day, stated explicitly and configurable, defaulting to UTC.
  */
+const BUSINESS_TIMEZONE = process.env.BUSINESS_TIMEZONE ?? 'UTC';
 
-/** Today as `YYYY-MM-DD`, matching how due dates are stored. */
+/** Formats a date as YYYY-MM-DD in the business timezone. 'en-CA' is ISO order by definition. */
+const businessDay = new Intl.DateTimeFormat('en-CA', {
+  timeZone: BUSINESS_TIMEZONE,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+
+/** Today as `YYYY-MM-DD` in the business timezone, matching how due dates are stored. */
 export function todayISO(): string {
-  return toISODate(new Date());
+  return businessDay.format(new Date());
 }
 
 export function toISODate(d: Date): string {
@@ -18,7 +35,14 @@ export function toISODate(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-/** Monday of the week containing `d`, at 00:00 local. Weeks run Monday–Sunday. */
+/**
+ * Monday of the week containing `d`, at 00:00 server-local. Weeks run Monday–Sunday.
+ *
+ * Not converted to the business timezone, unlike `todayISO`. The difference only moves a week
+ * boundary by a few hours, and it affects two soft figures — "due this week" and which bucket a
+ * completion lands in — rather than the hard overdue/not-overdue answer the product is judged on.
+ * Worth doing properly if this ever spanned regions; not worth the complexity now.
+ */
 export function startOfWeek(d = new Date()): Date {
   const out = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const dow = (out.getDay() + 6) % 7; // Monday = 0

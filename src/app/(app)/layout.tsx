@@ -23,11 +23,10 @@ import { ThemeToggle } from '@/components/theme';
 import { Avatar } from '@/components/ui';
 import { requireUser } from '@/lib/auth/session';
 import { countOpenAlerts } from '@/lib/queries/alerts';
-import { paletteIndex } from '@/lib/queries/palette';
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const user = await requireUser();
-  const [alerts, palette] = await Promise.all([countOpenAlerts(user), paletteIndex(user)]);
+  const alerts = await countOpenAlerts(user);
 
   const primary = [
     { href: '/dashboard', label: 'Dashboard', icon: <IconDashboard /> },
@@ -50,7 +49,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           </span>
         </Link>
 
-        <CommandPalette items={palette} />
+        <CommandPalette />
 
         <div className="mt-4">
           <NavLinks items={primary} />
