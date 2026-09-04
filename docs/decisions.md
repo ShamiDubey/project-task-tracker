@@ -93,6 +93,105 @@ as they were made, not reconstructed at the end.
 
 ---
 
-_Further decisions appended as they are made. At least one entry will carry a **Later reversed:**
-line once something is actually reversed — that will be recorded honestly when it happens, not
-manufactured._
+---
+
+## Decision 6 — Deleting a task is a soft delete
+
+- **Chose:** `tasks.deleted_at`. The task disappears from every view, filtered once in the query
+  layer, and its timeline survives with the deletion recorded as the last entry.
+- **Rejected:** an actual `DELETE`, which is what I built first.
+- **Why:** two goals collide and I did not notice until I re-read them together. Goal 1.3 lets
+  managers delete tasks. Goal 9.6 says nothing in the timeline can be edited or deleted, *including
+  by managers*. With a hard delete, `activity.task_id` cascades — so any manager could erase the
+  audit trail by deleting the task it belonged to, which is precisely what Goal 9 exists to prevent.
+  Archiving a project was already the sanctioned pattern for "hide it without destroying it"; this is
+  the same idea one level down.
+- **Later reversed:** yes — this entry *is* the reversal. The original implementation was a hard
+  delete and it shipped that way for several sessions. What changed my mind was writing the goals
+  out as individually numbered criteria and noticing that 1.3 and 9.6 could not both be true of the
+  same code. Verified afterwards: 3 timeline rows before the delete, 3 after, task invisible to every
+  query and 404 on its own page.
+
+---
+
+## Decision 7 — The interface only offers moves the server would accept, derived from one function
+
+- **Chose:** `allowedTransitions()` computes the buttons by asking `validateTransition()` about every
+  status and keeping the ones it accepts.
+- **Rejected:** a hard-coded button list per status, which is the obvious and much faster thing.
+- **Why:** Goal 4 asks the server to reject illegal moves *with a reason* and the interface to *only
+  offer legal moves*. Those are easy to let drift, most obviously at the two hard edges — leaving
+  Blocked, where the legal target depends on `blocked_from_status`, and reaching Done, where legality
+  depends on the state of entirely different rows. Deriving the buttons from the validator makes
+  disagreement impossible rather than unlikely. The state-machine test asserts exactly this property:
+  for every context and every target, the offered set and the accepted set are identical.
+
+---
+
+## Decision 8 — The palette's index loads on first use, not with every page
+
+- **Chose:** a route handler the palette fetches the first time it opens.
+- **Rejected:** building the index in the application shell, which is what I did first.
+- **Why:** it cost two queries on every single page load — one returning up to 300 rows — to populate
+  a feature most page views never touch. At roughly 300ms per round trip that was most of a second
+  of waste on pages that had nothing to do with search.
+- **Later reversed:** yes. I only found it by measuring the production build rather than trusting the
+  development server, and by expressing page cost in database round trips rather than milliseconds,
+  because the database is 8,000km from this machine and wall-clock noise was larger than the change
+  I was trying to measure. The task page went from 4.8 round trips to 2.4, helped also by wrapping
+  `getTask`, `getBlockers` and `isProjectMember` in React's `cache()` — the task page was calling
+  `getTask` three times from three call sites, each paying its own round trip.
+
+---
+
+## Decision 9 — "Overdue" is decided in one declared timezone, not the server's
+
+- **Chose:** an explicit `BUSINESS_TIMEZONE`, defaulting to UTC, used by `todayISO()`.
+- **Rejected:** the server's own locale (what it was), and each viewer's local timezone (the
+  superficially friendlier option).
+- **Why:** I found the same data producing different overdue counts on my machine (IST) and against
+  the database (UTC) — for five and a half hours of every day they disagree, so deploying to a
+  different region would silently change what "overdue" means. Per-viewer is worse, not better:
+  overdue has to be one shared fact, because if two colleagues see different counts the dashboard no
+  longer answers *"what is overdue"*, it answers *"what is overdue for you"* — and answering that
+  question for the whole company is the reason this product exists.
+- **Known gap:** week boundaries still use server-local time. It shifts a boundary by hours and
+  affects two soft figures rather than the hard overdue answer. Stated in the code rather than left
+  to be discovered.
+
+---
+
+## Decision 10 — A generative 2D canvas on the sign-in screen, not WebGL
+
+- **Chose:** about a hundred lines of 2D canvas animating the product's own subject — work moving
+  through four lanes, dependency edges between them, and roughly one node in seven going red and
+  stalling.
+- **Rejected:** a three.js scene, which was explicitly asked for.
+- **Why:** the sign-in screen is the one surface here that is a poster rather than a tool, so it
+  earns visual weight the rest of the application should not have. But a WebGL scene on the login
+  page of an internal delivery tracker costs several hundred kilobytes to say nothing about the
+  product, and on a brief that scores judgement it reads as not knowing what matters. The canvas
+  holds 60fps on integrated graphics, adds no dependency, and is *about* the thing being built.
+- **Also reversed here:** an earlier pass painted radial gradients that followed the cursor across
+  cards and their borders. They read as a blob chasing the mouse rather than a surface responding to
+  it, and the accent-coloured one competed with the only colour in this interface that carries
+  meaning. Removed; the geometric lean stayed.
+
+---
+
+## Decision 11 — Loading skeletons are scoped with route groups
+
+- **Chose:** each list page's `loading.tsx` lives inside an `(index)` route group.
+- **Rejected:** a `loading.tsx` at the `projects/` and `tasks/` segments, which is where I put them
+  first and looks more natural.
+- **Why:** a `loading.tsx` wraps its segment *and everything nested under it* in a Suspense boundary.
+  One level up, it also wrapped `/projects/[id]`, `/projects/new`, the settings page and
+  `/tasks/[id]` — and once Next begins streaming the shell the HTTP status is already committed to
+  200, so a later `notFound()` or `redirect()` can only be resolved on the client. Five
+  authorisation responses silently became 200s.
+- **Later reversed:** yes, within the hour. No data leaked — the pages still refused and rendered the
+  not-found UI with none of the project's content — but they refused with the wrong status code,
+  which anything checking status codes would have trusted and been wrong about. Caught by an HTTP
+  test asserting that a member gets a 404 on a project they are not on, which I nearly did not re-run
+  after a change that was "only styling".
+

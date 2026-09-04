@@ -1,11 +1,14 @@
-# Project & Task Tracker
+# Cadence — project & task tracking
+
+*Delivery, in view.*
 
 An internal tool for a services company running a dozen or so client projects at once. Managers set
 up projects, decide who is on each one, and see the whole portfolio. Staff see what is theirs and
 move it forward. Anyone can get a straight answer to **"what is overdue?"** and **"who is
 overloaded?"** without asking around.
 
-Built as a take-home submission — the original brief is preserved at [docs/brief.md](docs/brief.md).
+Built as a take-home submission. The original brief is preserved verbatim at
+[docs/brief.md](docs/brief.md), and [SUBMISSION.md](SUBMISSION.md) is the place to start.
 
 > **Live URL and demo credentials:** see [SUBMISSION.md](SUBMISSION.md).
 
@@ -57,6 +60,11 @@ npm run dev          # http://localhost:3000
 | Command | Does |
 |---|---|
 | `npm run dev` | Development server |
+| `npm test` | All four test suites — 158 checks (needs a running server) |
+| `npm run test:state` | Transition rules. Pure, no database, no server |
+| `npm run test:rules` | Attempts every illegal write and asserts Postgres refuses it |
+| `npm run test:goals` | The ten goals, against a running server |
+| `npm run test:browser` | Drives Chromium through every write path |
 | `npm run build` | Production build |
 | `npm run lint` | ESLint |
 | `npm run db:generate` | Generate a migration from `src/db/schema.ts` |
@@ -70,5 +78,6 @@ npm run dev          # http://localhost:3000
 |---|---|
 | `DATABASE_URL` | Neon pooled connection string |
 | `AUTH_SECRET` | Session JWT signing secret, 32+ random bytes |
+| `BUSINESS_TIMEZONE` | The company's working day, used to decide what counts as overdue. Defaults to UTC |
 
 Neither is ever committed. `.env.example` holds placeholders only.
