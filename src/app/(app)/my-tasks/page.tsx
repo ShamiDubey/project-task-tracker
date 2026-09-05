@@ -106,7 +106,7 @@ export default async function MyTasksPage({ searchParams }: PageProps<'/my-tasks
         <div className="space-y-5">
           {visible.map((group) => (
             <section key={group.key}>
-              <div className="mb-2 flex items-baseline gap-2.5">
+              <div className="mb-2 flex items-baseline gap-2.5 px-3">
                 <h2
                   className={cx(
                     'text-sm font-semibold',
