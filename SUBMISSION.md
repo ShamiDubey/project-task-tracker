@@ -30,6 +30,13 @@ headlines:
    No code does that; the dismissal stores the due date it was dismissed against, so any change to
    the date invalidates it automatically.
 
+**On the git history.** It runs to 34 commits across five days and the messages carry the reasoning,
+but two clusters on 31 Aug and 1 Sep landed far too much at once — twelve commits and sixty-two file
+changes inside nine minutes. The order those commits describe is the order I built in, but I built
+the application and split it into commits afterwards rather than committing as I went, which is what
+the brief asks against. Everything from 2 Sep onward is genuinely incremental. `docs/plan.md` sets
+out the specifics rather than leaving them to be found.
+
 **Verification.** `npm test` runs 158 checks in four suites: the transition rules, the database
 constraints (every illegal write attempted and confirmed refused), the ten goals against a running
 server, and a real browser driven through every write path. The browser suite is there because the
