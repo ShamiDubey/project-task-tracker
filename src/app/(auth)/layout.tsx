@@ -47,9 +47,31 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="relative flex flex-1 items-center justify-center px-5 pb-16">
-        <div className="w-full max-w-[380px]">
+      <main className="relative flex flex-1 items-center justify-center px-5 py-8">
+        <div className="w-full max-w-[400px]">
           <div className="rounded-xl border border-line bg-surface p-7 shadow-e2">{children}</div>
+
+          {/* What is behind the door. The card alone left the page reading as unfinished, and these
+              are the three things worth knowing before signing in. */}
+          <ul className="mt-6 divide-y divide-line rounded-xl border border-line bg-surface/60">
+            {[
+              ['Two roles, enforced on the server', 'Managers run the portfolio. Members see only the projects they are on — and typing a URL does not get them further.'],
+              ['A portfolio with something to show', 'Five active projects, an archived one, overdue work, blocked chains and eight weeks of history.'],
+              ['Rules the database holds', 'Cross-project dependencies, assigning a non-member and finishing blocked work are all refused outright.'],
+            ].map(([title, body]) => (
+              <li key={title} className="flex gap-3 px-4 py-3">
+                <span className="mt-[3px] flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-accent-soft">
+                  <svg viewBox="0 0 10 10" className="h-2.5 w-2.5 text-accent" aria-hidden>
+                    <path d="m1.6 5.2 2.2 2.2 4.6-5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
+                <span>
+                  <span className="block text-xs font-medium text-ink">{title}</span>
+                  <span className="mt-0.5 block text-xs leading-relaxed text-ink-2">{body}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
       </main>
 

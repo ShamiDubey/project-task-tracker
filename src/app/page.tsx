@@ -62,10 +62,10 @@ export default async function LandingPage() {
                   Sign in
                 </Link>
                 <Link
-                  href="/login"
+                  href="/register"
                   className="inline-flex items-center gap-1.5 rounded-lg bg-ink px-3.5 py-2 text-sm font-medium text-canvas transition-colors hover:bg-ink/90"
                 >
-                  Open the demo <IconArrowRight className="h-3.5 w-3.5" />
+                  Create an account <IconArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </>
             )}
@@ -114,7 +114,7 @@ export default async function LandingPage() {
             </div>
 
             <ul className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] text-ink-2">
-              {['Manager and member accounts', 'Seeded portfolio', 'No sign-up needed'].map((t) => (
+              {['Manager and member accounts', 'Seeded portfolio', 'Roles enforced on the server'].map((t) => (
                 <li key={t} className="flex items-center gap-1.5">
                   <IconCheck className="h-4 w-4 text-good" />
                   {t}
@@ -253,15 +253,15 @@ export default async function LandingPage() {
             <div className="min-w-0 flex-1">
               <h2 className="text-base font-semibold text-ink">Have a look around.</h2>
               <p className="mt-1 text-sm text-ink-2">
-                The demo is seeded with a full portfolio — overdue work, blocked chains, an uneven
-                workload and eight weeks of history.
+                Seeded with a full portfolio — overdue work, blocked chains, an uneven workload and
+                eight weeks of history.
               </p>
             </div>
             <Link
               href={user ? '/dashboard' : '/login'}
               className="sheen inline-flex shrink-0 items-center gap-2 rounded-lg bg-ink px-5 py-2.5 text-sm font-medium text-canvas transition-colors hover:bg-ink/90"
             >
-              {user ? 'Open the app' : 'Open the demo'}
+              {user ? 'Open the app' : 'Sign in'}
               <IconArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -285,7 +285,7 @@ export default async function LandingPage() {
             </div>
 
             {[
-              { heading: 'Product', links: [['What it does', '#what'], ['Capabilities', '#capabilities'], ['How it is built', '#built'], ['Open the demo', '/login']] },
+              { heading: 'Product', links: [['What it does', '#what'], ['Capabilities', '#capabilities'], ['How it is built', '#built'], ['Sign in', '/login']] },
               { heading: 'The build', links: [['Architecture', 'https://github.com/ShamiDubey/project-task-tracker/blob/main/docs/architecture.md'], ['Schema', 'https://github.com/ShamiDubey/project-task-tracker/blob/main/docs/schema.md'], ['Decisions', 'https://github.com/ShamiDubey/project-task-tracker/blob/main/docs/decisions.md'], ['Plan', 'https://github.com/ShamiDubey/project-task-tracker/blob/main/docs/plan.md']] },
               { heading: 'Repository', links: [['Source', 'https://github.com/ShamiDubey/project-task-tracker'], ['The brief', 'https://github.com/ShamiDubey/project-task-tracker/blob/main/docs/brief.md'], ['Submission', 'https://github.com/ShamiDubey/project-task-tracker/blob/main/SUBMISSION.md'], ['AI prompts', 'https://github.com/ShamiDubey/project-task-tracker/blob/main/docs/ai-prompts.md']] },
             ].map((col) => (

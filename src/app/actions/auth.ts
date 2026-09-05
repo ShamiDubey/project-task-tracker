@@ -62,5 +62,7 @@ export async function register(_prev: FormState, formData: FormData): Promise<Fo
 
 export async function logout(): Promise<void> {
   await destroySession();
-  redirect('/login');
+  // Back to the public site rather than the sign-in form. Someone who has just signed out has
+  // finished, and dropping them on a password box implies they are meant to sign straight back in.
+  redirect('/');
 }

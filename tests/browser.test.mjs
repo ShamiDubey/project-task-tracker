@@ -100,7 +100,8 @@ async function signIn(email, password = 'password123') {
 async function signOut() {
   await page.goto(`${BASE}/dashboard`, { waitUntil: 'domcontentloaded' });
   await page.click('button[title="Sign out"]');
-  await page.waitForURL('**/login', { timeout: 15000 });
+  // Signing out returns to the public landing page, not the sign-in form.
+  await page.waitForURL((u) => new URL(u).pathname === '/', { timeout: 15000 });
 }
 
 /* ------------------------------------------------------------- the scene */
@@ -114,7 +115,9 @@ await check('the landing page renders for a signed-out visitor', async () => {
     `status ${status}`;
 });
 await check('it offers a way into the product', async () => {
-  return (await page.getByRole('link', { name: /Open the demo/ }).count()) > 0 || 'no call to action';
+  const signIn = await page.getByRole('link', { name: /^Sign in/ }).count();
+  const register = await page.getByRole('link', { name: /Create an account/ }).count();
+  return (signIn > 0 && register > 0) || `sign in: ${signIn}, register: ${register}`;
 });
 
 heading('The sign-in page');
@@ -131,7 +134,9 @@ await check('the sign-in form is usable without scrolling', async () => {
 await check('the sign-in page stays focused on the form', async () => {
   // The product shot lives on the landing page now. This page has one job.
   const heading = await page.locator('h1').first().innerText();
-  const hasPreview = (await page.locator('text=The portfolio').count()) > 0;
+  // The dashboard mock lives on the landing page. Matching prose containing "portfolio" was a false
+  // positive; its sidebar is what actually identifies it.
+  const hasPreview = (await page.locator('text=Delivery, in view').count()) > 0;
   return (/sign in/i.test(heading) && !hasPreview) || `heading "${heading}", preview: ${hasPreview}`;
 });
 await check('it links back to the landing page', async () => {
