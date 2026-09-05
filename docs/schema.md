@@ -1,12 +1,86 @@
 # Schema
 
-Eight tables, all in `public`, defined in [`src/db/schema.ts`](../src/db/schema.ts) and materialised
-by the committed migration in [`drizzle/`](../drizzle). Postgres 18 on Neon.
+Eight core tables plus one for time tracking, all in `public`, on Postgres 18 (Neon). The whole
+thing lives in [`src/db/schema.ts`](../src/db/schema.ts) and the migrations that built it are
+checked into [`drizzle/`](../drizzle).
 
-The organising idea: **push a rule into the database whenever the database is capable of holding it.**
-Several of the ten goals state a rule inside the goal rather than in its headline, and those rules are
-exactly the ones that rot when they live in application code, because they have to be re-remembered by
-every future writer. Where a constraint below looks unusual, that is why, and the goal number is cited.
+If there's one idea behind all of this, it's: **let the database hold the rule wherever it can.** I
+kept coming back to one question — *"could a second writer get this wrong?"* There's never just one
+place that inserts a task. There's the normal form, the bulk action, the seed script, and whatever
+gets added next month. A rule that only the normal form remembers isn't really a rule. So where
+Postgres could enforce something, I made it.
+
+Here's how the tables fit together before we go through them one by one:
+
+```mermaid
+erDiagram
+    users ||--o{ projects : owns
+    users ||--o{ project_members : "belongs to"
+    projects ||--o{ project_members : has
+    projects ||--o{ tasks : contains
+    users }o--o{ tasks : "assigned via task_assignees"
+    tasks ||--o{ task_dependencies : "blocked by"
+    tasks ||--o{ activity : "logged in"
+    tasks ||--o{ time_entries : "time against"
+    tasks ||--o{ alert_dismissals : "dismissed by user"
+
+    users {
+        uuid id PK
+        text email UK "lower-cased, checked"
+        text name
+        text password_hash "bcrypt"
+        enum role "manager | member"
+    }
+    projects {
+        uuid id PK
+        text key UK "ACME, NOVA..."
+        uuid owner_id FK
+        timestamptz archived_at "null = active"
+        int task_seq "per-project counter"
+    }
+    tasks {
+        uuid id PK
+        uuid project_id FK
+        int number "ACME-14"
+        enum status
+        enum blocked_from_status "where it came from"
+        date due_date "nullable"
+        timestamptz completed_at
+        timestamptz deleted_at "soft delete"
+    }
+    project_members {
+        uuid project_id FK
+        uuid user_id FK
+    }
+    task_assignees {
+        uuid task_id FK
+        uuid user_id FK
+        uuid project_id "carried for the composite FK"
+    }
+    task_dependencies {
+        uuid task_id FK
+        uuid blocking_task_id FK
+        uuid project_id "carried for the composite FK"
+    }
+    activity {
+        uuid id PK
+        uuid task_id FK
+        uuid actor_id FK
+        enum type
+        text old_value
+        text new_value
+    }
+    alert_dismissals {
+        uuid user_id FK
+        uuid task_id FK
+        date dismissed_due_date "the whole trick"
+    }
+    time_entries {
+        uuid id PK
+        uuid task_id FK
+        int minutes "1..1440"
+    }
+```
 
 ---
 
@@ -17,328 +91,262 @@ every future writer. Where a constraint below looks unusual, that is why, and th
 | Column | Type | Notes |
 |---|---|---|
 | `id` | `uuid` PK | `gen_random_uuid()` |
-| `email` | `text` NOT NULL | unique index; check `email = lower(email)` |
+| `email` | `text` NOT NULL | unique; checked to be lower-cased |
 | `name` | `text` NOT NULL | |
-| `password_hash` | `text` NOT NULL | bcrypt, cost 12. Plaintext never leaves the request handler |
-| `role` | `user_role` NOT NULL | `manager` \| `member`, default `member` |
-| `created_at` / `updated_at` | `timestamptz` NOT NULL | default `now()` |
+| `password_hash` | `text` NOT NULL | bcrypt, cost 12. The plaintext never leaves the handler |
+| `role` | `user_role` NOT NULL | `manager` or `member`, defaults to `member` |
+| `created_at` / `updated_at` | `timestamptz` NOT NULL | |
 
-Roles are **global, not per-project**. The brief describes managers as people who run the portfolio,
-not people who happen to run one project. A per-project role would have turned "can this person
-archive a project" from a field read into a join, and nothing in the ten goals asks for it.
+Roles are global, not per-project. The brief talks about managers as people who run the whole
+portfolio, not people who happen to run one project — so "can this person archive a project" is a
+field read, not a join. Nothing in the ten goals needed anything finer.
 
-Emails are stored lower-cased and the database checks it, rather than the signup handler lower-casing
-and everyone trusting that it did — there is a second writer (the seed script), and a case-varying
-duplicate would defeat the unique index silently.
+Emails are stored lower-cased and Postgres checks it, rather than the signup handler lower-casing and
+everyone trusting it did. There's a second writer (the seed), and a case-varying duplicate would slip
+straight past the unique index otherwise.
 
 ### `projects`
 
 | Column | Type | Notes |
 |---|---|---|
 | `id` | `uuid` PK | |
-| `key` | `text` NOT NULL | unique; check `~ '^[A-Z][A-Z0-9]{1,9}$'` |
+| `key` | `text` NOT NULL | unique; must match `^[A-Z][A-Z0-9]{1,9}$` |
 | `name` | `text` NOT NULL | |
-| `description` | `text` NOT NULL | default `''` — empty, not null, so readers never branch |
+| `description` | `text` NOT NULL | defaults to empty string, so readers never have to null-check |
 | `owner_id` | `uuid` NOT NULL → `users.id` | `ON DELETE RESTRICT` |
-| `archived_at` | `timestamptz` NULL | **null = active** |
-| `task_seq` | `integer` NOT NULL | per-project task counter, default 0 |
+| `archived_at` | `timestamptz` NULL | **null means active** |
+| `task_seq` | `integer` NOT NULL | per-project task counter |
 | `created_at` / `updated_at` | `timestamptz` NOT NULL | |
 
-**Archive is a nullable timestamp, not a boolean and never a delete** (Goal 2.4–2.6). Default views
-filter on `archived_at is null`; restoring sets it back to null; the value records *when*, which a
-boolean throws away. No project row and no task row is ever destroyed.
+Archiving is a nullable timestamp, not a boolean and definitely not a delete. Default views filter on
+`archived_at is null`, restoring just sets it back to null, and the value tells you *when* it was
+archived — a boolean throws that away. No project row and no task row is ever destroyed.
 
-`owner_id` is `RESTRICT`, not `CASCADE` or `SET NULL`: a project must always have an owner, so
-deleting a person who owns projects should fail loudly and force a reassignment rather than quietly
-orphan a dozen clients' work.
+`owner_id` is `RESTRICT` on purpose. A project must always have an owner, so trying to delete someone
+who owns a dozen clients' projects should fail loudly and make you reassign them first, not silently
+orphan the work.
 
-`task_seq` gives human-readable references like `ACME-14`. A single global sequence would have been
-simpler, but task numbers are visible to whoever opens the app, and a global one leaks the total
-volume of work across every other client's project.
+`task_seq` is what gives you `ACME-14`. I could have used a single global sequence — simpler — but
+task numbers are visible to anyone who opens the app, and a global counter leaks how much work exists
+across every other client's project. Per-project keeps that quiet.
 
 ### `project_members` — join table
 
-| Column | Type |
-|---|---|
-| `project_id` | `uuid` → `projects.id` `ON DELETE CASCADE` |
-| `user_id` | `uuid` → `users.id` `ON DELETE CASCADE` |
-| `added_at` | `timestamptz` NOT NULL |
+`(project_id, user_id)` primary key, plus a second index on `user_id` alone.
 
-PK `(project_id, user_id)`, plus a secondary index on `user_id` alone.
-
-This table does more work than its three columns suggest. It is the answer to Goal 1.5 (members only
-see projects they belong to), and it is the foreign-key target that makes Goals 5.2 and 5.3
-enforceable by Postgres — see `task_assignees`.
-
-The PK serves *"who is on this project"*. The extra index on `user_id` serves the other direction,
-*"which projects is this person on"*, which is the first clause of every member-scoped read in the
-application and would otherwise be a sequential scan.
+This little three-column table does more than it looks. It's the answer to Goal 1.5 (members only see
+projects they're on), and it's the foreign-key *target* that lets two other tables enforce their
+rules in the database. The PK handles "who's on this project"; the extra index on `user_id` handles
+the reverse — "which projects is this person on" — which is the first thing every member-scoped query
+asks.
 
 ### `tasks`
 
 | Column | Type | Notes |
 |---|---|---|
 | `id` | `uuid` PK | |
-| `project_id` | `uuid` NOT NULL → `projects.id` cascade | Goal 3.1 — exactly one project |
+| `project_id` | `uuid` NOT NULL → `projects.id` | exactly one project, per Goal 3.1 |
 | `number` | `integer` NOT NULL | unique with `project_id` |
-| `title` | `text` NOT NULL | |
-| `description` | `text` NOT NULL | default `''` |
-| `status` | `task_status` NOT NULL | `backlog`, `in_progress`, `in_review`, `blocked`, `done` |
+| `title` / `description` | `text` NOT NULL | |
+| `status` | `task_status` | `backlog`, `in_progress`, `in_review`, `blocked`, `done` |
 | `blocked_from_status` | `task_status` NULL | see below |
-| `priority` | `task_priority` NOT NULL | `low`, `medium`, `high`, `urgent` |
-| `due_date` | `date` NULL | Goal 3.2 — optional |
+| `priority` | `task_priority` | `low`, `medium`, `high`, `urgent` |
+| `due_date` | `date` NULL | optional — Goal 3.2 |
 | `completed_at` | `timestamptz` NULL | see below |
-| `created_by_id` | `uuid` NULL → `users.id` `SET NULL` | |
+| `deleted_at` | `timestamptz` NULL | soft delete |
+| `created_by_id` | `uuid` NULL | |
 | `created_at` / `updated_at` | `timestamptz` NOT NULL | |
 
-**`due_date` is a `date`, not a `timestamptz`.** "Past its due date" is a calendar question. A
-timestamp would make whether a task is overdue depend on the viewer's timezone at midnight, and would
-invite a time-of-day nobody ever means.
+A few choices worth explaining.
 
-**Enums are Postgres enums, not text.** Two reasons. Bad data cannot exist even if a bug ships. And
-Postgres orders enums by declaration order, so `priority` declared `low → urgent` gives Goal 6.7's
-"sort by priority" natively — text would have needed a `CASE` in every sort or a second column.
+`due_date` is a `date`, not a timestamp. "Past its due date" is a calendar question — a timestamp
+would drag in a time of day nobody means and make "overdue" depend on the viewer's timezone at
+midnight.
 
-Three check constraints, and each exists because of a specific rule:
+The enums are real Postgres enums, not text. Two reasons: bad data can't exist even if a bug ships,
+and Postgres orders enums by declaration order — so declaring priority `low → urgent` gives you Goal
+6.7's "sort by priority" for free. Text would've needed a `CASE` in every sort.
 
-| Constraint | Guarantees |
+Then three check constraints, and each earns its place:
+
+| Constraint | What it guarantees |
 |---|---|
-| `(status = 'blocked') = (blocked_from_status is not null)` | Goal 4.3. There is no way to write a Blocked task with nowhere to return to, and no way to leave stale return-state on a task that is no longer blocked. |
-| `blocked_from_status is null or in ('in_progress','in_review')` | Goal 4.2 — Blocked is only reachable from those two states, so the memory of where it came from can only ever hold one of them. |
-| `(status = 'done') = (completed_at is not null)` | Keeps the denormalisation honest. |
+| `(status = 'blocked') = (blocked_from_status is not null)` | Goal 4.3. You can't write a Blocked task with nowhere to return to, and you can't leave stale return-state on a task that isn't blocked any more. |
+| `blocked_from_status in ('in_progress','in_review')` (or null) | Goal 4.2 — Blocked is only reachable from those two, so the memory of where it came from can only be one of them. |
+| `(status = 'done') = (completed_at is not null)` | Keeps the denormalised `completed_at` honest. |
 
-Indexes: `(project_id, status)`, `(status)`, `(due_date)`, `(updated_at)`, `(completed_at)` — these
-map onto Goal 6's filters and sorts and Goal 8's aggregates. Plus a second unique on `(id, project_id)`
-which is not redundant with the PK: it is the FK target the two tables below need.
+### `task_dependencies` — the clever one
 
-### `task_dependencies` — join table, tasks to tasks
+Many-to-many, tasks to tasks. `task_id` is the blocked task, `blocking_task_id` is the blocker, and
+`project_id` is carried **redundantly on purpose**.
 
-| Column | Type |
-|---|---|
-| `task_id` | `uuid` — the blocked task |
-| `blocking_task_id` | `uuid` — the blocker |
-| `project_id` | `uuid` — carried redundantly, deliberately |
-| `created_at`, `created_by_id` | |
+Here's why. Goal 3.4 says a blocker has to be in the same project. The obvious way is to look up the
+other task and compare project ids in application code. But then every call site has to remember to
+do it. Instead, the row carries one `project_id`, and two composite foreign keys — both pointing at
+`tasks (id, project_id)` — have to be satisfied by that single value:
 
-PK `(task_id, blocking_task_id)`; index on `blocking_task_id`; check `task_id <> blocking_task_id`.
+```mermaid
+flowchart LR
+    subgraph row["task_dependencies row"]
+        pid["project_id (one value)"]
+    end
+    row -->|"(task_id, project_id)"| t1["tasks(id, project_id)"]
+    row -->|"(blocking_task_id, project_id)"| t2["tasks(id, project_id)"]
+    t1 -.->|"both must match the same project_id"| verdict{"same project?"}
+    t2 -.-> verdict
+    verdict -->|no| reject["Postgres rejects the row"]
+    verdict -->|yes| accept["accepted"]
+```
 
-Two **composite** foreign keys, both into `tasks (id, project_id)`. Because a single `project_id`
-column has to satisfy both, Postgres can only accept the row if the blocked task and the blocker are
-in the same project. That is Goal 3.4 — *"any number of other tasks **in the same project** that block
-it"* — enforced by the database, not by a check every call site has to remember to perform.
+There's no value you can put in that column that makes both FKs happy unless both tasks really are in
+the same project. It's not a validation — it's an impossibility. Plus a `task_id <> blocking_task_id`
+check so a task can't block itself.
 
-The extra index is on `blocking_task_id` because the PK already serves *"what is blocking me"* (the
-Goal 4.5 check) and the task page also asks the reverse, *"what am I blocking"*.
+### `task_assignees` — the same trick, one better
 
-### `task_assignees` — join table, tasks to users
+Many-to-many, tasks to users. Same redundant `project_id`, but here the two composite FKs point at
+*different* tables:
 
-| Column | Type |
-|---|---|
-| `task_id` | `uuid` |
-| `user_id` | `uuid` |
-| `project_id` | `uuid` — carried redundantly, deliberately |
-| `assigned_at`, `assigned_by_id` | |
+- `(task_id, project_id) → tasks(id, project_id)`
+- `(project_id, user_id) → project_members(project_id, user_id)`, `ON DELETE CASCADE`
 
-PK `(task_id, user_id)`; index on `user_id`.
+That second one buys two goals at once. **Goal 5.2** — you can't be assigned unless you're a member,
+because the FK into `project_members` can't be satisfied otherwise. **Goal 5.3** — remove someone
+from a project and the cascade deletes exactly the assignments they held *on that project*, leaving
+their work everywhere else alone. The scoping just falls out of the composite key.
 
-This is the table I am happiest with. Two composite foreign keys —
-`(task_id, project_id) → tasks(id, project_id)` and
-`(project_id, user_id) → project_members(project_id, user_id)`, both `ON DELETE CASCADE` — buy two
-goals outright:
-
-- **Goal 5.2**, *"only members of a task's project may be assigned to it"*: the membership FK cannot
-  be satisfied by someone who is not on the project. Not a validation, an impossibility.
-- **Goal 5.3**, *"removing someone from a project unassigns them from that project's tasks"*: deleting
-  the `project_members` row cascades away exactly the assignments they held **on that project**, and
-  leaves their work on every other project alone. The scoping falls out of the composite key.
-
-The index on `user_id` is what makes Goal 5.4 ("everything assigned to me across all projects") and
-Goal 8.6 (the by-assignee breakdown that answers *"who is overloaded"*) index scans.
+(The app still does the unassignment explicitly in a transaction, because a cascade writes no
+timeline rows and Goal 9.4 needs them. The FK is the floor, not the mechanism. More on that below.)
 
 ### `activity` — the timeline
 
-| Column | Type | Notes |
-|---|---|---|
-| `id` | `uuid` PK | |
-| `task_id` | `uuid` NOT NULL → `tasks.id` cascade | |
-| `actor_id` | `uuid` NULL → `users.id` **`SET NULL`** | who did it |
-| `type` | `activity_type` NOT NULL | `created`, `field_changed`, `assigned`, `unassigned`, `commented`, `dependency_added`, `dependency_removed` |
-| `field`, `old_value`, `new_value` | `text` NULL | Goal 9.3 |
-| `subject_user_id` | `uuid` NULL → `users.id` `SET NULL` | for `assigned` / `unassigned` |
-| `body` | `text` NULL | for `commented` |
-| `created_at` | `timestamptz` NOT NULL | |
+One append-only stream per task. Columns for the actor, the type (`created`, `field_changed`,
+`assigned`, `unassigned`, `commented`, `dependency_added/removed`), the old and new values as text,
+a subject user for assignments, and a comment body. Index on `(task_id, created_at)` — the only way
+it's ever read is "this task, in order".
 
-Index on `(task_id, created_at)` — the timeline is only ever read as "this task, in order".
+Comments live in *this* table, not a separate one, because Goal 9.5 says comments are part of the
+timeline. One table, one `ORDER BY created_at`, and there's no chance of two streams disagreeing about
+order.
 
-**Comments are rows in this table, not a separate table**, because Goal 9.5 says comments are *part
-of* the timeline. One table means one `ORDER BY created_at` yields the whole history: no union, no
-two streams that can disagree about ordering, no second thing to paginate.
-
-`actor_id` is `SET NULL` rather than `CASCADE`. If a user record ever goes away, the record of what
-happened has to survive them — deleting a person must not rewrite the past.
-
-`old_value`/`new_value` are `text` for every field, including dates and enums. That is a deliberate
-loss of typing: it lets one table describe a change to any field without a column per type or a JSON
-blob, and nothing reads these values except to render them.
-
-There is **no `updated_at` column**, and that is the point — see the constraints section below.
+There's deliberately no `updated_at` here, and that's the point — see the constraints section.
 
 ### `alert_dismissals`
 
-| Column | Type |
-|---|---|
-| `user_id` | `uuid` → `users.id` cascade |
-| `task_id` | `uuid` → `tasks.id` cascade |
-| `dismissed_due_date` | `date` **NOT NULL** |
-| `dismissed_at` | `timestamptz` NOT NULL |
+`(user_id, task_id)` primary key. The interesting column is `dismissed_due_date`, and it's the whole
+design. An alert stays hidden for a person only while `dismissed_due_date = tasks.due_date`. Change
+the date from anywhere and the dismissal stops matching — the alert comes back on its own, no cleanup
+job, no flag to remember to clear. It even gets the changed-and-changed-back case right, which a
+boolean wouldn't.
 
-PK `(user_id, task_id)` — dismissal is per person, per task (Goal 10.3).
+### `time_entries` — the stretch feature
 
-`dismissed_due_date` is the whole design. An alert is suppressed for a user only while
-`dismissed_due_date = tasks.due_date`. So Goal 10.4 — *"if that task's due date later changes, the
-alert comes back"* — is a property of the read query rather than a behaviour every writer has to
-implement. Any change to `due_date`, from the edit form, from the Goal 7 bulk operation, from the
-seed script, or from a writer that does not exist yet, invalidates the dismissal with no cleanup job
-and no cache to bust. It also gets the *changed-and-changed-back* case right, which a boolean plus a
-"clear the flag on write" rule does not.
-
-`NOT NULL` because a task with no due date can never be overdue, and so can never be dismissed.
+One row per logged stretch of work: minutes, the day it was done, an optional note. Kept completely
+separate from the eight core tables on purpose — a task's total time is the *sum* of its entries,
+never a mutable column two writers could disagree about. A check constraint bounds each entry to
+1–1440 minutes so a fat-fingered "600" meant as 60 can't quietly land as ten hours. The whole feature
+could be dropped by deleting this one table.
 
 ---
 
-## Relationships
+## One-to-many vs many-to-many
 
-**One-to-many**
+**One-to-many:**
+- users → projects (as owner)
+- projects → tasks
+- tasks → activity, tasks → time_entries
+- users → activity (as actor)
 
-- `users` → `projects` (as owner, via `projects.owner_id`)
-- `projects` → `tasks` (Goal 3.1: a task belongs to exactly one project)
-- `tasks` → `activity`
-- `users` → `activity` (as actor, and as subject of an assignment event)
-- `users` → `tasks` (as creator)
+**Many-to-many**, each with its own join table:
+- users ↔ projects, via `project_members`
+- users ↔ tasks, via `task_assignees`
+- tasks ↔ tasks, via `task_dependencies` — a self-referencing one
 
-**Many-to-many**, each with its own join table
-
-- `users` ↔ `projects`, via `project_members` — membership
-- `users` ↔ `tasks`, via `task_assignees` — assignment (Goal 5.1)
-- `tasks` ↔ `tasks`, via `task_dependencies` — blocking (Goal 3.3), a self-referencing many-to-many
-
-**One-to-one-ish**: `alert_dismissals` is at most one row per `(user, task)` pair.
+**Roughly one-to-one:** `alert_dismissals` is at most one row per `(user, task)`.
 
 ---
 
-## Which constraints live where, and why the line is there
+## Which constraints live in the database, and which in the app
 
-**In the database** — anything that is a property of the data itself, and anything more than one
-writer has to respect:
+The dividing line is that same question: *could a second writer get this wrong?*
 
-- every foreign key and cascade rule
+**In Postgres** — anything that's a property of the data itself:
+- every foreign key and cascade
 - both composite FKs (same-project dependencies; assignment implies membership)
-- the three `tasks` check constraints (blocked-state consistency, valid blocked-from, `completed_at`)
-- format checks: project key shape, email lower-casing
-- uniqueness: email, project key, `(project_id, number)`
+- the three `tasks` checks, the time-entry bound
+- format checks (project key, email lower-casing)
+- uniqueness (email, project key, `(project_id, number)`)
 
-The test is *"could a second writer get this wrong?"* — the seed script, a bulk operation and a normal
-handler all insert tasks, so an invariant that only the normal handler upholds is not upheld. All of
-the above were verified by attempting the illegal write against the real Neon database and confirming
-it was rejected: 17 cases, all rejected.
+I proved these actually fire by trying every illegal write against the real database and confirming
+it refused — 20 cases now, all rejected. A constraint you've never watched fail isn't really a
+constraint.
 
-**In the application** — anything that needs context the row does not carry:
+**In the app** — anything that needs context the row doesn't have:
+- **The transition table.** Whether a move is legal depends on the current status, on
+  `blocked_from_status`, and on *other rows* (Goal 4.5: no Done while a blocker's unfinished). A
+  check constraint sees one row; it can't see a task's blockers. So this lives in one module,
+  `src/lib/task-status.ts`, imported by both the server and the UI so they can't drift.
+- **Role and visibility.** These depend on the session, which the database doesn't have. I looked at
+  Postgres row-level security and passed — it needs a per-request role or a session variable on a
+  pooled connection, which is fragile on serverless, and it hides the rule from the code a reviewer
+  reads.
+- **Writing the timeline.** A trigger could do it and be harder to bypass, but a trigger can't see
+  *who* made the change without smuggling the actor through a session variable, and Goal 9.3 needs
+  the actor.
 
-- **The transition table** (Goal 4). *Which* move is legal depends on the current status, on
-  `blocked_from_status`, and on the state of other rows entirely (Goal 4.5: no Done while a blocker is
-  unfinished). A check constraint sees one row and cannot see its blockers. It lives in one module,
-  `src/lib/task-status.ts`, imported by both the API and the UI so the two cannot drift.
-- **Role authorisation** (Goal 1). Depends on the session, which the database does not have.
-- **Visibility** (Goal 1.5). Applied as a predicate in the query layer. Postgres row-level security
-  was the alternative and was rejected: it would have required a per-request database role or a
-  session variable set on a pooled connection, which is fragile on serverless, and it would have
-  hidden the rule from the code a reviewer reads.
-- **Writing the timeline.** Every mutation writes its activity row in the same transaction as the
-  change. Database triggers were the alternative — they would be harder to bypass — but they cannot
-  see *who* made the change without smuggling the actor through a session variable, and Goal 9.3
-  requires the actor.
-
-**The honest gap.** Goal 9.6 says nothing in the timeline can be edited or deleted after the fact,
-*including by managers*. Today that is guaranteed by construction, not by Postgres: the `activity`
-table has no `updated_at`, and no UPDATE or DELETE path for those rows exists anywhere in the
-application. Anyone holding the `DATABASE_URL` could still rewrite a row by hand. Closing that
-properly means a `BEFORE UPDATE OR DELETE` trigger that raises, plus revoking `UPDATE`/`DELETE` on the
-table from the application role — which needs a second, more privileged migration role that Neon's
-free tier makes awkward. It is a real limitation and it is recorded here rather than glossed over.
-
-There is also a deliberate overlap on Goal 5.3: the database cascade *and* explicit application code
-both unassign people when they leave a project. The application does it because the cascade writes no
-activity rows and Goal 9.4 requires the unassignment to appear in the timeline. The FK is the floor,
-not the mechanism.
+**The honest gap.** Goal 9.6 says nothing in the timeline can be edited or deleted, *including by
+managers*. Right now that's true by construction — the `activity` table has no `updated_at`, and
+there's no update or delete path for those rows anywhere in the app. But it's not enforced by
+Postgres. Anyone with the connection string could still rewrite a row by hand. Closing that properly
+means a `BEFORE UPDATE OR DELETE` trigger that raises, plus revoking those grants from the app's role
+— which needs a second, more privileged migration role that Neon's free tier makes awkward. It's a
+real limitation and I'd rather write it down than pretend it isn't there.
 
 ---
 
-## What was deliberately denormalised
+## What I deliberately denormalised
 
-1. **`tasks.completed_at`** — derivable by scanning `activity` for the last change to `done`. It
-   exists because Goal 8 wants "completed this week" and an eight-week completions chart, and both
+1. **`tasks.completed_at`** — you could derive it by scanning the timeline for the last change to
+   `done`. It's there because Goal 8 wants "completed this week" and an eight-week chart, and both
    become one indexed range scan instead of an aggregate over the whole audit log. Guarded by the
-   `(status = 'done') = (completed_at is not null)` check, because an unguarded denormalisation is
-   just a bug waiting for a reopen that forgets to clear it.
-
-2. **`tasks.blocked_from_status`** — derivable by scanning the timeline backwards for the last status
-   change before the task was blocked. Storing it keeps a correctness rule (Goal 4.3) as a direct
-   read instead of a log query that slows as history grows, and stops a business rule from being
-   coupled to the exact shape of audit rows.
-
-3. **`project_id` on `task_dependencies` and `task_assignees`** — strictly redundant, since it is
-   reachable through `task_id`. It is there so the composite foreign keys can exist at all. This one
-   is the clearest trade in the schema: one duplicated `uuid` per row buys three goals as database
-   guarantees.
-
-4. **`projects.task_seq`** — a counter that could be `max(number) + 1`. A counter is O(1) and, held
-   under the same transaction as the insert, gapless; the `max()` is a scan and races.
-
-5. **`activity.old_value` / `new_value` as `text`** — denormalising every field's type into strings so
-   one table covers all of them.
+   `(status='done') = (completed_at is not null)` check, because an unguarded denormalisation is just
+   a bug waiting for a reopen that forgets to clear it.
+2. **`tasks.blocked_from_status`** — derivable by scanning history backwards. Storing it keeps Goal
+   4.3 a direct read instead of a log query that slows as history grows, and stops a business rule
+   from being coupled to the exact shape of audit rows.
+3. **`project_id` on the two join tables** — strictly redundant, reachable through `task_id`. It's
+   there so the composite FKs can exist at all. Clearest trade in the schema: one duplicated `uuid`
+   per row buys three goals as database guarantees.
+4. **`projects.task_seq`** — a counter that could be `max(number)+1`. The counter is O(1) and,
+   under the same transaction as the insert, gapless. The `max()` is a scan and it races.
 
 ---
 
-## What would break first at 100× the data
+## What breaks first at 100× the data
 
-Sizing the current shape at roughly 12 projects, ~50 people, a few thousand tasks. 100× is ~1,200
-projects, ~5,000 people, several hundred thousand tasks and — the number that actually matters —
-**millions of activity rows**, since history only ever grows.
+Call today's size ~12 projects, ~50 people, a few thousand tasks. 100× is ~1,200 projects, ~5,000
+people, hundreds of thousands of tasks — and millions of activity rows, since history only grows.
 
-In the order I expect them to break:
+In the order I expect them to go:
 
-1. **The text search in Goal 6.1, first and by a distance.** Search over titles *and* descriptions is
-   `ILIKE '%term%'`, which no B-tree can serve; it is a sequential scan over every task the viewer can
-   see. It is fine at a few thousand rows and it is the first thing to fall over. The fix is known and
-   cheap — `pg_trgm` with a GIN index on `title` and `description`, or a `tsvector` column with a GIN
-   index if we want ranking and stemming. I have deliberately not built it: at this data size it would
-   be an index nobody needs, and knowing precisely which query dies first is worth more here than
-   pre-optimising it.
+1. **The text search, first and by a mile.** Search over titles *and* descriptions is
+   `ILIKE '%term%'`, which no B-tree can serve — it's a sequential scan over everything the viewer
+   can see. Fine at a few thousand rows; it's the first thing to fall over. The fix is known and
+   cheap: `pg_trgm` with a GIN index, or a `tsvector` column if I want ranking. I've deliberately not
+   built it — at this size it'd be an index nobody needs, and knowing exactly which query dies first
+   is worth more than pre-optimising.
+2. **The `COUNT(*)` for the total match count.** Goal 6.8 wants the total, so that's the same scan
+   run twice on the most-used screen. The usual fixes (planner estimate, or a "1,000+" cap) both
+   change what the UI can honestly claim.
+3. **`activity` outgrowing everything.** It's the only append-only table and takes several rows per
+   mutation, so at 100× it's the largest table by an order of magnitude. Reads stay fine —
+   `(task_id, created_at)` is exactly the access pattern — but total size, backups, and any future
+   cross-project feed would want time-based partitioning.
+4. **The dashboard's by-assignee breakdown.** A group-by over every task the viewer can see, with no
+   time bound. For a manager who sees everything, that's a full scan on every dashboard load. It's
+   also the exact query that answers "who is overloaded" — the whole reason the product exists — so
+   it'd be the one I'd fix second, with a covering index or a refreshed materialised view.
 
-2. **`COUNT(*)` for Goal 6.8's total match count.** The brief requires showing the total number of
-   matches, which means an exact count over the full filtered set on every page load — the same scan
-   as the search, run twice. At 100× this doubles the cost of the most-used screen. The usual fixes
-   are an approximate count from the planner, or a "1,000+" cap, both of which change what the UI can
-   honestly claim.
-
-3. **`activity` outgrowing everything else.** It is the only append-only table and it takes several
-   rows per task mutation, so at 100× it is easily the largest table by an order of magnitude. Reads
-   stay fine — `(task_id, created_at)` is exactly the access pattern and the working set is one task's
-   history. What degrades is total size, backups, and any future cross-project activity feed (a stretch
-   idea), which would want `(created_at)` and time-based partitioning.
-
-4. **The dashboard's by-assignee breakdown.** A group-by across every task visible to the viewer, with
-   no time bound. For a manager who can see everything, that is a scan over the whole table on every
-   dashboard load. The eight-week chart is fine because `completed_at` bounds it; the open-task
-   breakdown has no such bound. It wants either a covering index or a periodically-refreshed
-   materialised view, and the fact that it is exactly the query answering *"who is overloaded"* — the
-   product's whole reason to exist — means it is the one I would fix second.
-
-5. **`projects.task_seq` under contention.** Incrementing one row per project serialises concurrent
-   task creation *within* a project. At this scale it is invisible; it would only matter with an
-   importer creating thousands of tasks into one project at once, and I would rather have gapless,
-   per-project numbers than optimise for a load this application does not have.
-
-What does *not* worry me: the joins. Every many-to-many access path has an index in the direction it
-is actually read, and the composite foreign keys mean the planner has real statistics on the columns
-that scope every query.
+What doesn't worry me: the joins. Every many-to-many path has an index in the direction it's actually
+read, and the composite FKs mean the planner has real statistics on the columns that scope every
+query.
