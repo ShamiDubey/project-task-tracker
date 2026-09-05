@@ -14,7 +14,7 @@ import {
 import { requireUser } from '@/lib/auth/session';
 import { isUuid } from '@/lib/validation/schemas';
 import { canViewProject, isManager, isProjectMember } from '@/lib/authz';
-import { isOverdue, longDateTime, relativeDue, shortDate } from '@/lib/dates';
+import { dueLabel, isOverdue, longDateTime, shortDate } from '@/lib/dates';
 import { listProjectMembers } from '@/lib/queries/projects';
 import {
   candidateBlockers,
@@ -158,7 +158,7 @@ export default async function TaskPage({ params }: PageProps<'/tasks/[id]'>) {
                 <dd className="flex items-center gap-2">
                   {overdue && <OverdueBadge />}
                   <span className={overdue ? 'text-danger' : 'text-ink'}>
-                    {task.dueDate ? `${shortDate(task.dueDate)} · ${relativeDue(task.dueDate)}` : 'No due date'}
+                    {dueLabel(task.dueDate)}
                   </span>
                 </dd>
               </div>

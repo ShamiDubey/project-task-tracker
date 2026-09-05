@@ -82,7 +82,7 @@ function readStored(): Theme {
   }
 }
 
-export function ThemeToggle() {
+export function ThemeToggle({ onShell = false }: { onShell?: boolean } = {}) {
   const theme = useSyncExternalStore(subscribe, readStored, () => 'system' as Theme);
 
   // Keep "system" honest if the OS flips while the tab is open. This only touches the DOM, so it is
@@ -110,7 +110,7 @@ export function ThemeToggle() {
     <div
       role="radiogroup"
       aria-label="Colour theme"
-      className="flex items-center gap-0.5 rounded-lg bg-sunk p-0.5"
+      className={`flex items-center gap-0.5 rounded-md p-0.5 ${onShell ? 'bg-shell-2' : 'bg-sunk'}`}
     >
       {OPTIONS.map((option) => {
         const active = theme === option.value;
@@ -130,8 +130,12 @@ export function ThemeToggle() {
             onClick={() => choose(option.value)}
             className={`flex h-6 w-7 items-center justify-center rounded-md transition-colors duration-150 ${
               active
-                ? 'bg-surface text-ink shadow-e1'
-                : 'text-ink-3 hover:text-ink-2'
+                ? onShell
+                  ? 'bg-shell-active text-shell-ink'
+                  : 'bg-surface text-ink shadow-e1'
+                : onShell
+                  ? 'text-shell-ink-3 hover:text-shell-ink-2'
+                  : 'text-ink-3 hover:text-ink-2'
             }`}
           >
             {option.icon}

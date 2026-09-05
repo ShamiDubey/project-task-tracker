@@ -1,29 +1,39 @@
 import Link from 'next/link';
 
 import { IconPlus } from '@/components/icons';
-import { Tilt } from '@/components/motion';
-import { Avatar, Card, EmptyState, LinkButton, PageHeader, Ref, cx } from '@/components/ui';
+import { TBody, TD, TH, THead, TR, Table } from '@/components/table';
+import { Avatar, EmptyState, LinkButton, PageHeader, Ref, cx } from '@/components/ui';
 import { requireUser } from '@/lib/auth/session';
 import { isManager } from '@/lib/authz';
 import { listProjects } from '@/lib/queries/projects';
 
 export const metadata = { title: 'Projects' };
 
+/**
+ * The portfolio as a table.
+ *
+ * This was a grid of cards, which looked tidy and answered nothing: to compare two projects you had
+ * to read two boxes. A table lets the eye run down the overdue column, which is the question anyone
+ * opening this page is actually asking. Progress is a bar rather than a percentage because the shape
+ * of the remaining work matters more than the number.
+ */
 export default async function ProjectsPage({ searchParams }: PageProps<'/projects'>) {
   const user = await requireUser();
   const params = await searchParams;
   const showArchived = params.archived === '1';
   const projects = await listProjects(user, showArchived);
 
+  const totalOpen = projects.reduce((n, p) => n + p.openTasks, 0);
+  const totalLate = projects.reduce((n, p) => n + p.overdueTasks, 0);
+
   return (
     <>
       <PageHeader
-        eyebrow={isManager(user) ? 'Portfolio' : 'Your work'}
         title="Projects"
         subtitle={
-          isManager(user)
-            ? 'Every engagement in the portfolio, with its open and overdue count.'
-            : 'The projects you have been added to.'
+          projects.length === 0
+            ? undefined
+            : `${projects.length} ${projects.length === 1 ? 'project' : 'projects'} · ${totalOpen} open · ${totalLate} late`
         }
         actions={
           <>
@@ -40,14 +50,14 @@ export default async function ProjectsPage({ searchParams }: PageProps<'/project
         }
       />
 
-      {projects.length === 0 ? (
-        <Card>
+      <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-e1">
+        {projects.length === 0 ? (
           <EmptyState
-            title="No projects to show."
+            title={showArchived ? 'No archived projects.' : 'No projects yet.'}
             hint={
               isManager(user)
                 ? 'Create the first one and add the people who will work on it.'
-                : 'You have not been added to any projects yet. A manager can add you.'
+                : 'You have not been added to any projects. A manager can add you.'
             }
             action={
               isManager(user) && (
@@ -57,90 +67,83 @@ export default async function ProjectsPage({ searchParams }: PageProps<'/project
               )
             }
           />
-        </Card>
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {projects.map((project) => {
-            const health = project.overdueTasks > 0 ? 'late' : project.openTasks > 0 ? 'active' : 'clear';
-            return (
-              <Link key={project.id} href={`/projects/${project.id}`} className="group block h-full">
-                <Tilt max={5} className="h-full">
-                  <Card
-                    className={cx(
-                      'relative flex h-full flex-col p-4 group-hover:shadow-e2',
-                      project.archivedAt && 'opacity-70',
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
+        ) : (
+          <Table>
+            <THead>
+              <TH width="88">Key</TH>
+              <TH>Project</TH>
+              <TH width="150">Owner</TH>
+              <TH width="64" align="right">People</TH>
+              <TH width="180">Progress</TH>
+              <TH width="64" align="right">Open</TH>
+              <TH width="72" align="right">Late</TH>
+            </THead>
+            <TBody>
+              {projects.map((project) => {
+                const total = Math.max(1, project.openTasks + project.doneTasks);
+                const donePct = (project.doneTasks / total) * 100;
+                const latePct = (project.overdueTasks / total) * 100;
+                return (
+                  <TR key={project.id}>
+                    <TD>
                       <Ref tone="accent">{project.key}</Ref>
-                      <span
-                        className={cx(
-                          'ml-auto inline-flex items-center gap-1.5 text-2xs font-medium',
-                          health === 'late' ? 'text-danger' : health === 'active' ? 'text-info' : 'text-good',
-                        )}
+                    </TD>
+                    <TD>
+                      <Link
+                        href={`/projects/${project.id}`}
+                        className="font-medium text-ink transition-colors hover:text-accent"
                       >
-                        <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
-                        {health === 'late'
-                          ? `${project.overdueTasks} late`
-                          : health === 'active'
-                            ? 'On track'
-                            : 'All clear'}
-                      </span>
-                    </div>
-
-                    <h2 className="mt-2.5 text-sm font-semibold text-ink transition-colors group-hover:text-accent">
-                      {project.name}
+                        {project.name}
+                      </Link>
                       {project.archivedAt && (
-                        <span className="ml-2 rounded-full bg-surface-2 px-1.5 py-0.5 text-2xs font-normal text-ink-3">
+                        <span className="ml-2 rounded bg-surface-2 px-1.5 py-0.5 text-2xs text-ink-3">
                           Archived
                         </span>
                       )}
-                    </h2>
-                    <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-ink-2">
-                      {project.description}
-                    </p>
-
-                    <div className="mt-auto flex items-end justify-between gap-3 border-t border-line pt-3">
-                      <dl className="flex gap-5">
-                        <div>
-                          <dt className="text-2xs text-ink-3">Open</dt>
-                          <dd data-metric className="text-sm font-medium text-ink">
-                            {project.openTasks}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt className="text-2xs text-ink-3">Overdue</dt>
-                          <dd
-                            data-metric
-                            className={cx(
-                              'text-sm font-medium',
-                              project.overdueTasks > 0 ? 'text-danger' : 'text-ink',
-                            )}
-                          >
-                            {project.overdueTasks}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt className="text-2xs text-ink-3">People</dt>
-                          <dd data-metric className="text-sm font-medium text-ink">
-                            {project.memberCount}
-                          </dd>
-                        </div>
-                      </dl>
-                      <div className="flex items-center gap-1.5" title={`Owner: ${project.ownerName}`}>
+                      <span className="block max-w-[52ch] truncate text-2xs text-ink-3">
+                        {project.description}
+                      </span>
+                    </TD>
+                    <TD>
+                      <span className="flex items-center gap-1.5">
                         <Avatar name={project.ownerName} size="xs" />
-                        <span className="max-w-[92px] truncate text-2xs text-ink-3">
-                          {project.ownerName}
+                        <span className="truncate text-xs text-ink-2">{project.ownerName}</span>
+                      </span>
+                    </TD>
+                    <TD align="right" muted>
+                      <span className="text-xs tabular-nums">{project.memberCount}</span>
+                    </TD>
+                    <TD>
+                      <span className="flex items-center gap-2">
+                        <span className="flex h-1.5 flex-1 overflow-hidden rounded-full bg-sunk">
+                          <span className="h-full bg-danger" style={{ width: `${latePct}%` }} />
+                          <span className="h-full bg-good/60" style={{ width: `${donePct}%` }} />
                         </span>
-                      </div>
-                    </div>
-                  </Card>
-                </Tilt>
-              </Link>
-            );
-          })}
-        </div>
-      )}
+                        <span className="w-8 shrink-0 text-right text-2xs tabular-nums text-ink-3">
+                          {Math.round(donePct)}%
+                        </span>
+                      </span>
+                    </TD>
+                    <TD align="right">
+                      <span className="text-xs font-medium tabular-nums text-ink">{project.openTasks}</span>
+                    </TD>
+                    <TD align="right">
+                      <span
+                        className={cx(
+                          'text-xs font-medium tabular-nums',
+                          project.overdueTasks > 0 ? 'text-danger' : 'text-ink-3',
+                        )}
+                      >
+                        {project.overdueTasks || '—'}
+                      </span>
+                    </TD>
+                  </TR>
+                );
+              })}
+            </TBody>
+          </Table>
+        )}
+      </div>
     </>
   );
 }

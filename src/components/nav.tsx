@@ -24,8 +24,10 @@ export function NavLinks({ items, dense = false }: { items: NavItem[]; dense?: b
             href={item.href}
             aria-current={active ? 'page' : undefined}
             className={cx(
-              'group relative flex items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-sm transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:translate-x-0.5',
-              active ? 'bg-accent-soft font-medium text-accent' : 'text-ink-2 hover:bg-surface-2 hover:text-ink',
+              'group relative flex items-center gap-2.5 rounded-md px-2.5 py-[7px] text-sm transition-colors duration-150',
+              active
+                ? 'bg-shell-active font-medium text-shell-ink'
+                : 'text-shell-ink-2 hover:bg-shell-2 hover:text-shell-ink',
             )}
           >
             {/* A 2px marker on the active item, so the state survives a greyscale screenshot. */}
@@ -38,8 +40,8 @@ export function NavLinks({ items, dense = false }: { items: NavItem[]; dense?: b
             />
             <span
               className={cx(
-                'shrink-0 transition-transform duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-110',
-                active ? 'text-accent' : 'text-ink-3 group-hover:text-ink-2',
+                'shrink-0 transition-colors duration-150',
+                active ? 'text-shell-ink' : 'text-shell-ink-3 group-hover:text-shell-ink-2',
               )}
             >
               {item.icon}
@@ -50,7 +52,7 @@ export function NavLinks({ items, dense = false }: { items: NavItem[]; dense?: b
               <span
                 className={cx(
                   'inline-flex min-w-[18px] items-center justify-center rounded-full px-1 py-px text-[10px] font-semibold tabular-nums',
-                  active ? 'bg-accent text-on-accent' : 'bg-danger-soft text-danger ring-1 ring-inset ring-danger-line',
+                  active ? 'bg-danger text-white' : 'bg-danger/15 text-[#f28b82]',
                 )}
                 aria-label={`${item.badge} overdue`}
               >
@@ -66,7 +68,7 @@ export function NavLinks({ items, dense = false }: { items: NavItem[]; dense?: b
 
 export function NavSection({ label }: { label: string }) {
   return (
-    <p className="mb-1 mt-5 px-2.5 text-2xs font-medium uppercase tracking-[0.08em] text-ink-3">
+    <p className="mb-1 mt-5 px-2.5 text-2xs font-medium uppercase tracking-[0.08em] text-shell-ink-3">
       {label}
     </p>
   );

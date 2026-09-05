@@ -105,3 +105,55 @@ export const IconBlocked = (p: IconProps) => (
     <path d="m4.2 4.2 7.6 7.6" />
   </Svg>
 );
+
+/* ---------------------------------------------------- landing page icons */
+
+export const IconEye = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M1.4 8s2.4-4.3 6.6-4.3S14.6 8 14.6 8s-2.4 4.3-6.6 4.3S1.4 8 1.4 8Z" />
+    <circle cx="8" cy="8" r="1.9" />
+  </Svg>
+);
+
+export const IconPeople = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="6" cy="5.6" r="2.4" />
+    <path d="M1.9 13.4a4.1 4.1 0 0 1 8.2 0" />
+    <path d="M10.6 3.6a2.4 2.4 0 0 1 0 4.6M11.4 9.6a4.1 4.1 0 0 1 2.7 3.8" />
+  </Svg>
+);
+
+export const IconClock = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="8" cy="8" r="6.1" />
+    <path d="M8 4.5V8l2.4 1.6" />
+  </Svg>
+);
+
+export const IconLock = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="3.1" y="7" width="9.8" height="6.6" rx="1.6" />
+    <path d="M5.6 7V5.2a2.4 2.4 0 0 1 4.8 0V7" />
+  </Svg>
+);
+
+export const IconFilter = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M2.2 3.6h11.6L9.4 8.4v4.4l-2.8-1.6V8.4Z" />
+  </Svg>
+);
+
+export const IconChart = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M2.2 13.4h11.6" />
+    <path d="M4.4 13.4V9M8 13.4V4.2M11.6 13.4v-5.6" />
+  </Svg>
+);
+
+export const IconHistory = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M2.4 8a5.6 5.6 0 1 0 1.7-4" />
+    <path d="M2.2 2.4v3.2h3.2" />
+    <path d="M8 5.2V8l2 1.4" />
+  </Svg>
+);

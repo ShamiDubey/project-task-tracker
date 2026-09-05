@@ -143,7 +143,7 @@ export function AssigneeControls({
           <select
             value={toAdd}
             onChange={(e) => setToAdd(e.target.value)}
-            className={`${fieldClass} py-1 text-xs`}
+            className={`${fieldClass} min-w-0 flex-1 py-1 text-xs`}
             aria-label="Person to assign"
           >
             {candidates.map((m) => (
@@ -154,6 +154,7 @@ export function AssigneeControls({
           </select>
           <Button
             size="sm"
+            className="shrink-0"
             disabled={pending || !toAdd}
             onClick={() => startTransition(async () => setMessage(await assignUser(taskId, toAdd)))}
           >
@@ -219,7 +220,7 @@ export function DependencyControls({
           <select
             value={toAdd}
             onChange={(e) => setToAdd(e.target.value)}
-            className={`${fieldClass} py-1 text-xs`}
+            className={`${fieldClass} min-w-0 flex-1 py-1 text-xs`}
             aria-label="Task that blocks this one"
           >
             {candidates.map((c) => (
@@ -230,12 +231,14 @@ export function DependencyControls({
           </select>
           <Button
             size="sm"
+            aria-label="Add blocker"
+            className="shrink-0 whitespace-nowrap"
             disabled={pending || !toAdd}
             onClick={() =>
               startTransition(async () => setMessage(await addDependency(taskId, toAdd)))
             }
           >
-            Add blocker
+            Add
           </Button>
         </div>
       )}

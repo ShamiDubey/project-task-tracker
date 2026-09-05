@@ -24,8 +24,39 @@
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
 
   /* A real type scale, so hierarchy comes from size and weight rather than colour. */
-  --text-2xs: 0.6875rem;
+  /* --------------------------------------------------------------- type
+     A ladder, not a pile. Seven steps, each with a job, so hierarchy comes
+     from size and weight rather than from drawing a box around things.
+
+       display  page title, one per screen
+       title    section heading
+       metric   a number meant to be read at a glance
+       body     prose and table cells
+       label    form labels, column headers
+       meta     timestamps, counts, secondary detail
+       micro    chips and badges
+     -------------------------------------------------------------------- */
+  --text-2xs: 0.6875rem;   /* 11px — micro */
   --text-2xs--line-height: 1rem;
+  --text-metric: 1.75rem;  /* 28px */
+  --text-metric--line-height: 1;
+  --text-metric--letter-spacing: -0.02em;
+  --text-display: 1.625rem; /* 26px */
+  --text-display--line-height: 1.2;
+  --text-display--letter-spacing: -0.025em;
+
+  /* ------------------------------------------------------------ density
+     A productivity tool is scanned, not read. Rows are 36px, which fits
+     roughly eighteen tasks on a laptop screen without feeling cramped, and
+     every vertical measure is a multiple of 4. */
+  --row-h: 2.25rem;        /* 36px — a table row */
+  --row-h-relaxed: 2.75rem;/* 44px — a row carrying an avatar */
+
+  /* ------------------------------------------------------------- radius
+     Three values. Anything with more starts to look unconsidered. */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
 
   /* Layered elevation. Surfaces sit at heights; they are not all flat cards. */
   --shadow-e1: 0 1px 2px 0 rgb(16 24 40 / 0.04), 0 1px 3px 0 rgb(16 24 40 / 0.06);
@@ -76,6 +107,22 @@
   --info:          #15549e;
   --info-soft:     #eff5fd;
   --info-line:     #c9dcf5;
+
+  /* ------------------------------------------------------------- the shell
+     The sidebar is near-black in both themes, not a tint of the page.
+
+     It is chrome, not content. Committing it to a dark ground does two things:
+     the working area reads as the bright, focused surface it should be, and
+     navigation stops competing with the data for attention. It also means the
+     shell looks identical whichever theme the viewer picked, so the product
+     has one silhouette rather than two. */
+  --shell:          #101014;
+  --shell-2:        #1a1a20;
+  --shell-line:     #26262e;
+  --shell-ink:      #f0f0f2;
+  --shell-ink-2:    #9a9aa6;
+  --shell-ink-3:    #6b6b78;
+  --shell-active:   #26263a;
 }
 
 :root[data-theme='dark'] {
@@ -141,6 +188,13 @@
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
   --color-info-line: var(--info-line);
+  --color-shell: var(--shell);
+  --color-shell-2: var(--shell-2);
+  --color-shell-line: var(--shell-line);
+  --color-shell-ink: var(--shell-ink);
+  --color-shell-ink-2: var(--shell-ink-2);
+  --color-shell-ink-3: var(--shell-ink-3);
+  --color-shell-active: var(--shell-active);
 }
 
 /* ------------------------------------------------------------------- base */
@@ -367,4 +421,9 @@ h1, h2, h3 {
 @keyframes scroll-cue {
   0%   { transform: translateY(-100%); }
   100% { transform: translateY(300%); }
+}
+
+@keyframes drawer-in {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
 }

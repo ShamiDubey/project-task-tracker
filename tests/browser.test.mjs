@@ -104,6 +104,19 @@ async function signOut() {
 }
 
 /* ------------------------------------------------------------- the scene */
+heading('The public landing page');
+await check('the landing page renders for a signed-out visitor', async () => {
+  await page.goto(`${BASE}/`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(600);
+  await shot('00-landing');
+  const status = (await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' }))?.status();
+  return (status === 200 && (await page.locator('text=Clarity for every project.').count()) > 0) ||
+    `status ${status}`;
+});
+await check('it offers a way into the product', async () => {
+  return (await page.getByRole('link', { name: /Open the demo/ }).count()) > 0 || 'no call to action';
+});
+
 heading('The sign-in page');
 await check('the sign-in form is usable without scrolling', async () => {
   await page.goto(`${BASE}/login`, { waitUntil: 'networkidle' });
@@ -118,8 +131,10 @@ await check('the sign-in form is usable without scrolling', async () => {
 await check('the product preview is rendered beside it', async () => {
   return (await page.locator('text=The portfolio').count()) > 0 || 'preview missing';
 });
-await check('demo credentials are on the page', async () => {
-  return (await page.locator('text=priya@tracker.dev').count()) > 0 || 'missing';
+await check('demo credentials are NOT on the page', async () => {
+  // They belong in SUBMISSION.md, not in the product. A login screen advertising working accounts
+  // is a demo artefact, and this asserts it stays out.
+  return (await page.locator('text=@tracker.dev').count()) === 0 || 'credentials still shown';
 });
 
 /* ---------------------------------------------------------------- manager */
@@ -207,9 +222,11 @@ await check('a malformed key is refused with a message', async () => {
 });
 
 const projectUrl = await (async () => {
-  await page.goto(`${BASE}/projects`, { waitUntil: 'domcontentloaded' });
-  const link = page.locator(`a:has-text("${key}")`).first();
-  const href = await link.getAttribute('href');
+  await page.goto(`${BASE}/projects`, { waitUntil: 'networkidle' });
+  // The projects list is a table now: the key sits in its own cell and the name carries the link,
+  // so find the row by its key and take the link from that row.
+  const row = page.locator('tr').filter({ hasText: key }).first();
+  const href = await row.locator('a[href^="/projects/"]').first().getAttribute('href');
   return `${BASE}${href}`;
 })();
 
@@ -402,11 +419,11 @@ await check('a member typing the URL is redirected away', async () => {
 });
 await check('a member sees a narrower project list than a manager', async () => {
   await page.goto(`${BASE}/projects`, { waitUntil: 'networkidle' });
-  const asMember = await page.locator('a[href^="/projects/"]').count();
+  const asMember = await page.locator('tbody tr').count();
   await signOut();
   await signIn('priya@tracker.dev');
   await page.goto(`${BASE}/projects`, { waitUntil: 'networkidle' });
-  const asManager = await page.locator('a[href^="/projects/"]').count();
+  const asManager = await page.locator('tbody tr').count();
   console.log(`          member sees ${asMember}, manager sees ${asManager}`);
   return asMember < asManager || `member ${asMember} vs manager ${asManager}`;
 });
@@ -417,7 +434,7 @@ await check('archive the test project, and it leaves the default list', async ()
   await page.getByRole('button', { name: 'Archive project' }).click();
   await until(async () => (await page.locator('text=Project archived.').count()) > 0, { timeout: 25000 });
   await page.goto(`${BASE}/projects`, { waitUntil: 'networkidle' });
-  return (await page.locator(`a:has-text("${key}")`).count()) === 0 || 'still listed';
+  return (await page.locator('tr').filter({ hasText: key }).count()) === 0 || 'still listed';
 });
 await check('it is still there behind "Show archived"', async () => {
   await page.goto(`${BASE}/projects?archived=1`, { waitUntil: 'networkidle' });
@@ -428,7 +445,7 @@ await check('restore brings it back', async () => {
   await page.getByRole('button', { name: 'Restore project' }).click();
   await until(async () => (await page.locator('text=Project restored.').count()) > 0, { timeout: 25000 });
   await page.goto(`${BASE}/projects`, { waitUntil: 'networkidle' });
-  return (await page.locator(`a:has-text("${key}")`).count()) > 0 || 'not restored';
+  return (await page.locator('tr').filter({ hasText: key }).count()) > 0 || 'not restored';
 });
 await check('deleting a task hides it but keeps its history', async () => {
   await page.goto(taskUrl, { waitUntil: 'domcontentloaded' });

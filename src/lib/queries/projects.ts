@@ -18,6 +18,7 @@ export type ProjectSummary = {
   ownerName: string;
   memberCount: number;
   openTasks: number;
+  doneTasks: number;
   overdueTasks: number;
 };
 
@@ -37,6 +38,11 @@ export async function listProjects(user: User, includeArchived = false): Promise
       openTasks: sql<number>`(
         select count(*)::int from ${tasks}
         where ${tasks.projectId} = ${projects.id} and ${tasks.status} <> 'done'
+          and ${tasks.deletedAt} is null
+      )`,
+      doneTasks: sql<number>`(
+        select count(*)::int from ${tasks}
+        where ${tasks.projectId} = ${projects.id} and ${tasks.status} = 'done'
           and ${tasks.deletedAt} is null
       )`,
       overdueTasks: sql<number>`(

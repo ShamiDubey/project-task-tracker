@@ -110,3 +110,17 @@ export function relativeDue(dueDate: string | null): string {
   if (diff <= 7) return `In ${diff} days`;
   return shortDate(dueDate);
 }
+
+/**
+ * How a due date is written wherever there is room for both forms.
+ *
+ * `relativeDue` falls back to the absolute date once a due date is more than a week out, so pairing
+ * the two rendered "1 Oct · 1 Oct". Near dates get the relative phrase, which is what someone
+ * actually wants to know; far ones get the date alone.
+ */
+export function dueLabel(dueDate: string | null): string {
+  if (!dueDate) return 'No due date';
+  const relative = relativeDue(dueDate);
+  const absolute = shortDate(dueDate);
+  return relative === absolute ? absolute : `${absolute} · ${relative}`;
+}

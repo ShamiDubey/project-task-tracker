@@ -40,12 +40,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-full">
-      <aside className="sticky top-0 hidden h-screen w-[228px] shrink-0 flex-col border-r border-line bg-surface px-2.5 py-3 md:flex">
+      <aside className="sticky top-0 hidden h-screen w-[224px] shrink-0 flex-col bg-shell px-2.5 py-3 md:flex">
         <Link href="/dashboard" className="mb-3 flex items-center gap-2.5 rounded-lg px-1.5 py-1">
           <Wordmark />
           <span className="min-w-0">
-            <span className="block text-sm font-semibold leading-tight tracking-tight text-ink">Cadence</span>
-            <span className="block text-2xs leading-tight text-ink-3">Delivery, in view</span>
+            <span className="block text-sm font-semibold leading-tight tracking-tight text-shell-ink">Cadence</span>
+            <span className="block text-2xs leading-tight text-shell-ink-3">Delivery, in view</span>
           </span>
         </Link>
 
@@ -57,19 +57,19 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           <NavLinks items={portfolio} />
         </div>
 
-        <div className="mt-auto space-y-2 border-t border-line pt-3">
-          <ThemeToggle />
-          <div className="flex items-center gap-2 rounded-lg px-1.5 py-1">
+        <div className="mt-auto space-y-2 border-t border-shell-line pt-3">
+          <ThemeToggle onShell />
+          <div className="flex items-center gap-2 rounded-md px-1.5 py-1">
             <Avatar name={user.name} />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-medium text-ink">{user.name}</p>
-              <p className="truncate text-2xs capitalize text-ink-3">{user.role}</p>
+              <p className="truncate text-xs font-medium text-shell-ink">{user.name}</p>
+              <p className="truncate text-2xs capitalize text-shell-ink-3">{user.role}</p>
             </div>
             <form action={logout}>
               <button
                 type="submit"
                 title="Sign out"
-                className="rounded-md p-1.5 text-ink-3 transition-colors hover:bg-surface-2 hover:text-ink"
+                className="rounded-md p-1.5 text-shell-ink-3 transition-colors hover:bg-shell-2 hover:text-shell-ink"
               >
                 <IconSignOut />
                 <span className="sr-only">Sign out</span>
@@ -81,10 +81,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Small screens lose the sidebar, so the same destinations move into a compact bar. */}
-        <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-line bg-surface/85 px-3 py-2 backdrop-blur-md md:hidden">
+        <header className="sticky top-0 z-20 flex items-center gap-3 bg-shell px-3 py-2 md:hidden">
           <Link href="/dashboard" className="flex items-center gap-2">
             <Wordmark />
-            <span className="text-sm font-semibold tracking-tight">Cadence</span>
+            <span className="text-sm font-semibold tracking-tight text-shell-ink">Cadence</span>
           </Link>
           <div className="ml-auto">
             <NavLinks dense items={[...primary, ...portfolio]} />

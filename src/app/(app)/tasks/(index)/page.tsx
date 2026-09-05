@@ -32,23 +32,29 @@ export default async function TasksPage({ searchParams }: PageProps<'/tasks'>) {
         }
       />
 
-      <div className="space-y-3">
-        <TaskFilters
-          projects={projects.map((p) => ({ id: p.id, name: p.name, key: p.key }))}
-          assignees={assignees.map((a) => ({ id: a.id, name: a.name }))}
-          total={page.total}
-        />
+      {/* One frame around the whole working surface — filters, table and pagination read as a single
+          instrument rather than three cards stacked on a page. */}
+      <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-e1">
+        <div className="px-3 pt-3">
+          <TaskFilters
+            projects={projects.map((p) => ({ id: p.id, name: p.name, key: p.key }))}
+            assignees={assignees.map((a) => ({ id: a.id, name: a.name }))}
+            total={page.total}
+          />
+        </div>
 
         <BulkTaskList tasks={page.rows} people={assignees.map((a) => ({ id: a.id, name: a.name }))} />
 
-        <Pagination
-          params={params}
-          page={page.page}
-          pageCount={page.pageCount}
-          total={page.total}
-          pageSize={page.pageSize}
-          basePath="/tasks"
-        />
+        <div className="border-t border-line px-3">
+          <Pagination
+            params={params}
+            page={page.page}
+            pageCount={page.pageCount}
+            total={page.total}
+            pageSize={page.pageSize}
+            basePath="/tasks"
+          />
+        </div>
       </div>
     </>
   );

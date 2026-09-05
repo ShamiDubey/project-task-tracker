@@ -235,11 +235,11 @@ function PaletteTrigger({ onOpen }: { onOpen: () => void }) {
   return (
     <button
       onClick={onOpen}
-      className="group flex w-full items-center gap-2 rounded-lg bg-sunk px-2.5 py-1.5 text-left text-xs text-ink-3 ring-1 ring-inset ring-transparent transition-colors hover:text-ink-2 hover:ring-line-strong"
+      className="group flex w-full items-center gap-2 rounded-md bg-shell-2 px-2.5 py-1.5 text-left text-xs text-shell-ink-3 ring-1 ring-inset ring-shell-line transition-colors hover:text-shell-ink-2"
     >
       <IconSearch className="h-3.5 w-3.5" />
       <span className="flex-1">Search…</span>
-      <kbd className="rounded border border-line bg-surface px-1 py-px font-mono text-[10px] text-ink-3">
+      <kbd className="rounded border border-shell-line bg-shell px-1 py-px font-mono text-[10px] text-shell-ink-3">
         {mac ? '⌘' : 'Ctrl'}K
       </kbd>
     </button>

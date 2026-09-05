@@ -201,7 +201,9 @@ const [clear] = await sql`
   where t.status='in_review' and t.deleted_at is null
     and not exists (select 1 from task_dependencies d join tasks b on b.id=d.blocking_task_id
                     where d.task_id=t.id and b.status <> 'done') limit 1`;
-const [finished] = await sql`select id from tasks where status='done' and deleted_at is null limit 1`;
+const [finished] = await sql`
+  select t.id from tasks t join projects p on p.id = t.project_id
+  where t.status = 'done' and t.deleted_at is null and p.archived_at is null limit 1`;
 
 await check('4.2/4.3 a blocked task offers only the state it was blocked from', async () => {
   const html = await body(`/tasks/${blocked.id}`, manager.cookie);
@@ -350,8 +352,11 @@ await check('6.7 all three sorts render', async () => {
 await check('6.7 reversing a sort reverses the list', async () => {
   // Read the first row of the list itself, not the first reference in the document — the command
   // palette index sits above the list and is identical whatever the sort is.
-  const firstRow = (html) =>
-    (html.split('Select all on this page')[1] ?? '').match(/([A-Z]{4,6}-\d+)/)?.[1];
+  const firstRow = (html) => {
+    // The table body starts after the header row; the palette index sits above it in the document.
+    const body = html.split('aria-label="Select all tasks on this page"')[1] ?? '';
+    return body.match(/([A-Z]{4,6}-\d+)/)?.[1];
+  };
   const asc = firstRow(await body('/tasks?sort=due_date&dir=asc', manager.cookie));
   const desc = firstRow(await body('/tasks?sort=due_date&dir=desc', manager.cookie));
   return (asc && desc && asc !== desc) || `ascending starts at ${asc}, descending at ${desc}`;
@@ -375,8 +380,9 @@ await check('6.9 one page of rows is sent, not the whole table', async () => {
   // Count rows in the list itself. The command palette also ships an index of task references with
   // the shell, so matching references across the whole document would measure the wrong thing —
   // Goal 6 is about the list being paged by the server, which is what this asserts.
-  const listOnly = allTasks.split('Select all on this page')[1] ?? '';
-  const rows = (listOnly.match(/aria-label="Select /g) ?? []).length;
+  // Count the per-row checkboxes. The header's select-all carries a different label, so it is not
+  // included in this count.
+  const rows = (allTasks.match(/aria-label="Select [^a]/g) ?? []).length;
   const [{ n }] = await sql`select count(*)::int n from tasks where deleted_at is null`;
   return (rows > 0 && rows <= 25 && n > 25) || `list rendered ${rows} rows of ${n} tasks`;
 });
@@ -387,8 +393,8 @@ await check('6.x a member sees strictly fewer tasks than a manager', async () =>
 heading('GOAL 7 — bulk actions and export');
 await check('7.1 tasks can be selected from the list', async () => {
   const html = await body('/tasks', manager.cookie);
-  return (html.includes('Select all on this page') && /aria-label="Select /.test(html)) ||
-    'no selection controls';
+  return (/aria-label="Select all tasks on this page"/.test(html) &&
+    (html.match(/aria-label="Select [^a]/g) ?? []).length > 0) || 'no selection controls';
 });
 await check('7.2 the toolbar applies a status move, an assignee change or a due date', async () => {
   // The toolbar only renders once a selection exists, so this reads the component rather than the
@@ -405,7 +411,10 @@ await check('7.3/7.4 each task gets its own transaction, not one batch', async (
 });
 await check('7.5 per-task outcomes and reasons are rendered', async () => {
   const src = readFileSync('src/app/(app)/tasks/(index)/bulk-list.tsx', 'utf8');
-  return (/result\.outcomes\.map/.test(src) && /o\.reason/.test(src)) || 'outcomes not shown';
+  // Every outcome is listed, not only the failures — Goal 7.3 asks for what succeeded as well as
+  // what was rejected.
+  return (/result\.outcomes\.map/.test(src) && /o\.reason/.test(src) && /o\.ok \?/.test(src)) ||
+    'per-task outcomes not rendered';
 });
 await check('7.6 CSV downloads as a file', async () => {
   const r = await get('/api/tasks/export?overdue=1', manager.cookie);

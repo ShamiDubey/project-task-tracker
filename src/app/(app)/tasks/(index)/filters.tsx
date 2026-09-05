@@ -3,15 +3,23 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
 
-import { Button, cx, fieldClass } from '@/components/ui';
+import { IconClose, IconSearch } from '@/components/icons';
+import { cx, fieldBase } from '@/components/ui';
 import { STATUS_LABELS, STATUS_ORDER } from '@/lib/task-status';
 
 type Option = { id: string; name: string; key?: string };
 
 /**
- * Every control here writes to the URL and lets the server re-render the list. Nothing filters in
- * the browser — Goal 6 is explicit that the server must do the work, and keeping the filters in the
- * query string is also what makes a filtered view shareable.
+ * The task list's controls.
+ *
+ * Every control writes to the URL and lets the server re-render. Nothing filters in the browser —
+ * the server has to do the work, and keeping the filters in the query string also makes a filtered
+ * view shareable and reload-safe.
+ *
+ * The layout is a deliberate two-tier arrangement rather than a stack of full-width boxes:
+ * search and the three select controls on one line, sized to their content; toggles beneath,
+ * grouped by what they filter, with active filters summarised so it is always obvious why the
+ * result count is what it is.
  */
 export function TaskFilters({
   projects,
@@ -37,7 +45,7 @@ export function TaskFilters({
     startTransition(() => router.push(`/tasks?${next.toString()}`));
   };
 
-  // Debounced search, so typing does not fire a query per keystroke.
+  // Debounced, so typing does not fire a query per keystroke.
   useEffect(() => {
     const current = params.get('q') ?? '';
     if (q === current) return;
@@ -48,6 +56,10 @@ export function TaskFilters({
 
   const statuses = (params.get('status') ?? '').split(',').filter(Boolean);
   const priorities = (params.get('priority') ?? '').split(',').filter(Boolean);
+  const overdue = params.get('overdue') === '1';
+  const archived = params.get('archived') === '1';
+  const projectId = params.get('project') ?? '';
+  const assigneeId = params.get('assignee') ?? '';
 
   const toggle = (key: 'status' | 'priority', value: string) => {
     const list = key === 'status' ? statuses : priorities;
@@ -55,152 +67,180 @@ export function TaskFilters({
     set({ [key]: next.join(',') || undefined });
   };
 
-  const hasFilters =
-    Boolean(params.get('q')) ||
-    statuses.length > 0 ||
-    priorities.length > 0 ||
-    Boolean(params.get('project')) ||
-    Boolean(params.get('assignee')) ||
-    params.get('overdue') === '1' ||
-    params.get('archived') === '1';
+  const activeCount =
+    (params.get('q') ? 1 : 0) + statuses.length + priorities.length +
+    (projectId ? 1 : 0) + (assigneeId ? 1 : 0) + (overdue ? 1 : 0) + (archived ? 1 : 0);
 
   return (
-    <div className="space-y-3 rounded-xl border border-line bg-surface p-3">
+    <div className="border-b border-line pb-3">
+      {/* Row one: search, then the three things you pick exactly one of. */}
       <div className="flex flex-wrap items-center gap-2">
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Search titles and descriptions…"
-          className={`${fieldClass} max-w-xs flex-1`}
-          aria-label="Search tasks"
+        <div className="relative min-w-[220px] flex-1 sm:max-w-xs">
+          <IconSearch className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-3" />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search titles and descriptions"
+            aria-label="Search tasks"
+            className={cx(fieldBase, 'w-full py-1.5 pl-8 pr-8 text-sm')}
+          />
+          {q && (
+            <button
+              onClick={() => setQ('')}
+              aria-label="Clear search"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-ink-3 hover:text-ink"
+            >
+              <IconClose className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+
+        <Select
+          label="Project"
+          value={projectId}
+          onChange={(v) => set({ project: v || undefined })}
+          options={[{ value: '', label: 'All projects' }, ...projects.map((p) => ({ value: p.id, label: `${p.key} · ${p.name}` }))]}
         />
-
-        <select
-          value={params.get('project') ?? ''}
-          onChange={(e) => set({ project: e.target.value || undefined })}
-          className={`${fieldClass} w-auto`}
-          aria-label="Filter by project"
-        >
-          <option value="">All projects</option>
-          {projects.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.key} — {p.name}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={params.get('assignee') ?? ''}
-          onChange={(e) => set({ assignee: e.target.value || undefined })}
-          className={`${fieldClass} w-auto`}
-          aria-label="Filter by assignee"
-        >
-          <option value="">Anyone</option>
-          {assignees.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.name}
-            </option>
-          ))}
-        </select>
-
-        <select
+        <Select
+          label="Assignee"
+          value={assigneeId}
+          onChange={(v) => set({ assignee: v || undefined })}
+          options={[{ value: '', label: 'Anyone' }, ...assignees.map((a) => ({ value: a.id, label: a.name }))]}
+        />
+        <Select
+          label="Sort"
           value={`${params.get('sort') ?? 'updated_at'}:${params.get('dir') ?? 'desc'}`}
-          onChange={(e) => {
-            const [sort, dir] = e.target.value.split(':');
+          onChange={(v) => {
+            const [sort, dir] = v.split(':');
             set({ sort, dir });
           }}
-          className={`${fieldClass} w-auto`}
-          aria-label="Sort"
-        >
-          <option value="updated_at:desc">Recently updated</option>
-          <option value="updated_at:asc">Least recently updated</option>
-          <option value="due_date:asc">Due date, soonest first</option>
-          <option value="due_date:desc">Due date, latest first</option>
-          <option value="priority:desc">Priority, highest first</option>
-          <option value="priority:asc">Priority, lowest first</option>
-        </select>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-1.5">
-        {STATUS_ORDER.map((s) => (
-          <button
-            key={s}
-            type="button"
-            onClick={() => toggle('status', s)}
-            className={cx(
-              'rounded-full px-2.5 py-1 text-xs ring-1 ring-inset transition-colors',
-              statuses.includes(s)
-                ? 'bg-accent text-on-accent ring-accent'
-                : 'bg-surface text-ink-2 ring-line-strong hover:bg-surface-2',
-            )}
-          >
-            {STATUS_LABELS[s]}
-          </button>
-        ))}
-
-        <span className="mx-1 h-4 w-px bg-line" />
-
-        {(['low', 'medium', 'high', 'urgent'] as const).map((p) => (
-          <button
-            key={p}
-            type="button"
-            onClick={() => toggle('priority', p)}
-            className={cx(
-              'rounded-full px-2.5 py-1 text-xs capitalize ring-1 ring-inset transition-colors',
-              priorities.includes(p)
-                ? 'bg-accent text-on-accent ring-accent'
-                : 'bg-surface text-ink-2 ring-line-strong hover:bg-surface-2',
-            )}
-          >
-            {p}
-          </button>
-        ))}
-
-        <span className="mx-1 h-4 w-px bg-line" />
-
-        <button
-          type="button"
-          onClick={() => set({ overdue: params.get('overdue') === '1' ? undefined : '1' })}
-          className={cx(
-            'rounded-full px-2.5 py-1 text-xs ring-1 ring-inset transition-colors',
-            params.get('overdue') === '1'
-              ? 'bg-danger text-on-accent ring-danger'
-              : 'bg-surface text-ink-2 ring-line-strong hover:bg-surface-2',
-          )}
-        >
-          Overdue only
-        </button>
-
-        <button
-          type="button"
-          onClick={() => set({ archived: params.get('archived') === '1' ? undefined : '1' })}
-          className={cx(
-            'rounded-full px-2.5 py-1 text-xs ring-1 ring-inset transition-colors',
-            params.get('archived') === '1'
-              ? 'bg-ink text-canvas ring-ink'
-              : 'bg-surface text-ink-2 ring-line-strong hover:bg-surface-2',
-          )}
-        >
-          Include archived projects
-        </button>
+          options={[
+            { value: 'updated_at:desc', label: 'Recently updated' },
+            { value: 'updated_at:asc', label: 'Least recently updated' },
+            { value: 'due_date:asc', label: 'Due soonest' },
+            { value: 'due_date:desc', label: 'Due latest' },
+            { value: 'priority:desc', label: 'Highest priority' },
+            { value: 'priority:asc', label: 'Lowest priority' },
+          ]}
+        />
 
         <span className="ml-auto flex items-center gap-2">
-          <span className="text-xs tabular-nums text-ink-2">
-            {total} match{total === 1 ? '' : 'es'}
+          <span className="tabular-nums text-xs text-ink-2">
+            <span className="font-medium text-ink">{total}</span>{' '}
+            {total === 1 ? 'task' : 'tasks'}
           </span>
           <a
             href={`/api/tasks/export?${params.toString()}`}
-            className="rounded-lg px-2.5 py-1 text-xs font-medium text-accent ring-1 ring-inset ring-line-strong hover:bg-accent-soft"
+            className="rounded-md px-2 py-1 text-xs font-medium text-ink-2 ring-1 ring-inset ring-line-strong transition-colors hover:bg-surface-2 hover:text-ink"
           >
             Export CSV
           </a>
-          {hasFilters && (
-            <Button tone="ghost" size="sm" onClick={() => startTransition(() => router.push('/tasks'))}>
-              Clear
-            </Button>
-          )}
         </span>
       </div>
+
+      {/* Row two: the multi-select toggles, grouped so it reads as three questions, not eleven. */}
+      <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-2">
+        <ChipGroup label="Status">
+          {STATUS_ORDER.map((s) => (
+            <Chip key={s} active={statuses.includes(s)} onClick={() => toggle('status', s)}>
+              {STATUS_LABELS[s]}
+            </Chip>
+          ))}
+        </ChipGroup>
+
+        <ChipGroup label="Priority">
+          {(['low', 'medium', 'high', 'urgent'] as const).map((p) => (
+            <Chip key={p} active={priorities.includes(p)} onClick={() => toggle('priority', p)}>
+              <span className="capitalize">{p}</span>
+            </Chip>
+          ))}
+        </ChipGroup>
+
+        <ChipGroup label="Scope">
+          <Chip tone="danger" active={overdue} onClick={() => set({ overdue: overdue ? undefined : '1' })}>
+            Overdue
+          </Chip>
+          <Chip active={archived} onClick={() => set({ archived: archived ? undefined : '1' })}>
+            Archived projects
+          </Chip>
+        </ChipGroup>
+
+        {activeCount > 0 && (
+          <button
+            onClick={() => startTransition(() => router.push('/tasks'))}
+            className="ml-auto flex items-center gap-1 text-xs font-medium text-ink-2 transition-colors hover:text-ink"
+          >
+            <IconClose className="h-3 w-3" />
+            Clear {activeCount} filter{activeCount === 1 ? '' : 's'}
+          </button>
+        )}
+      </div>
     </div>
+  );
+}
+
+function Select({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+}) {
+  return (
+    <select
+      aria-label={label}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className={cx(fieldBase, 'max-w-[190px] py-1.5 pr-7 text-xs')}
+    >
+      {options.map((o) => (
+        <option key={o.value} value={o.value}>
+          {o.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function ChipGroup({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="text-2xs font-medium uppercase tracking-[0.06em] text-ink-3">{label}</span>
+      {children}
+    </div>
+  );
+}
+
+function Chip({
+  active,
+  tone = 'neutral',
+  onClick,
+  children,
+}: {
+  active: boolean;
+  tone?: 'neutral' | 'danger';
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={cx(
+        'rounded-md px-2 py-1 text-xs transition-colors duration-150',
+        active
+          ? tone === 'danger'
+            ? 'bg-danger text-white'
+            : 'bg-ink text-canvas'
+          : 'text-ink-2 ring-1 ring-inset ring-line hover:bg-surface-2 hover:text-ink',
+      )}
+    >
+      {children}
+    </button>
   );
 }

@@ -340,8 +340,18 @@ export function LinkButton({
 
 /* ------------------------------------------------------------------ inputs */
 
-export const fieldClass =
-  'block w-full rounded-lg border-0 bg-surface px-3 py-2 text-sm text-ink ring-1 ring-inset ring-line-strong transition-shadow placeholder:text-ink-3 focus:ring-2 focus:ring-inset focus:ring-accent';
+/**
+ * Field styling without a width, so a call site can choose one.
+ *
+ * `fieldClass` below adds `w-full`. Appending `w-auto` to it does not override that: both are plain
+ * utilities of equal specificity, so the winner is whichever Tailwind emits later in the stylesheet
+ * rather than whichever is written last in the string. That is why the task-list selects stretched
+ * across the page. Compose from `fieldBase` when the width is not full.
+ */
+export const fieldBase =
+  'block rounded-lg border-0 bg-surface px-3 py-2 text-sm text-ink ring-1 ring-inset ring-line-strong transition-shadow placeholder:text-ink-3 focus:ring-2 focus:ring-inset focus:ring-accent';
+
+export const fieldClass = `${fieldBase} w-full`;
 
 export function Field({ label, hint, children }: { label: string; hint?: ReactNode; children: ReactNode }) {
   return (
