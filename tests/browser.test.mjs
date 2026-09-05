@@ -128,8 +128,14 @@ await check('the sign-in form is usable without scrolling', async () => {
   const scrolls = await page.evaluate(() => document.body.scrollHeight > window.innerHeight + 4);
   return (box && box.y < 900 && !scrolls) || `field at y=${box?.y}, page scrolls: ${scrolls}`;
 });
-await check('the product preview is rendered beside it', async () => {
-  return (await page.locator('text=The portfolio').count()) > 0 || 'preview missing';
+await check('the sign-in page stays focused on the form', async () => {
+  // The product shot lives on the landing page now. This page has one job.
+  const heading = await page.locator('h1').first().innerText();
+  const hasPreview = (await page.locator('text=The portfolio').count()) > 0;
+  return (/sign in/i.test(heading) && !hasPreview) || `heading "${heading}", preview: ${hasPreview}`;
+});
+await check('it links back to the landing page', async () => {
+  return (await page.getByRole('link', { name: /Back to site/ }).count()) > 0 || 'no way back';
 });
 await check('demo credentials are NOT on the page', async () => {
   // They belong in SUBMISSION.md, not in the product. A login screen advertising working accounts

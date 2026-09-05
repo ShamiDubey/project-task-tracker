@@ -75,14 +75,14 @@ export default async function LandingPage() {
 
       {/* ------------------------------------------------------------ hero */}
       <section className="relative overflow-hidden border-b border-line">
-        <div className="mx-auto grid max-w-6xl items-center gap-12 px-5 py-16 lg:grid-cols-[minmax(0,1.02fr)_minmax(0,1fr)] lg:py-24">
+        <div className="mx-auto grid max-w-6xl items-center gap-12 px-5 py-16 lg:grid-cols-[minmax(0,1.28fr)_minmax(0,1fr)] lg:py-24">
           <div className="reveal" style={{ '--i': 0 } as React.CSSProperties}>
             <span className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1 text-xs font-medium text-ink-2">
               <span className="h-1.5 w-1.5 rounded-full bg-good" aria-hidden />
               Built for services teams that deliver
             </span>
 
-            <h1 className="mt-6 text-[clamp(1.9rem,3.5vw,2.65rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-balance text-ink">
+            <h1 className="mt-6 text-[clamp(1.85rem,3.2vw,2.45rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-balance text-ink">
               Clarity for every project.
               <br />
               Confidence in every delivery.
@@ -110,8 +110,8 @@ export default async function LandingPage() {
               </a>
             </div>
 
-            <ul className="mt-7 flex flex-wrap gap-x-6 gap-y-2 text-xs text-ink-2">
-              {['Sign in as a manager or a member', 'Seeded with a live portfolio', 'No sign-up needed'].map((t) => (
+            <ul className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-ink-2">
+              {['Manager and member accounts', 'Seeded portfolio', 'No sign-up'].map((t) => (
                 <li key={t} className="flex items-center gap-1.5">
                   <IconCheck className="h-3.5 w-3.5 text-good" />
                   {t}
@@ -122,16 +122,17 @@ export default async function LandingPage() {
 
           {/* The real interface, bled off the right edge so it reads as a window into the product. */}
           <div
-            className="reveal relative -mr-24 hidden lg:block"
+            className="reveal relative hidden lg:block"
             style={{ '--i': 2 } as React.CSSProperties}
           >
-            <div className="[perspective:2000px]">
-              <div className="origin-top-left scale-[0.94] [transform:rotateY(-6deg)_rotateX(3deg)]">
-                <div className="rounded-2xl border border-line bg-surface p-2 shadow-e3">
-                  <ProductPreview />
-                </div>
+            {/* The whole application, scaled down and bled off the right edge so it reads as a
+                window onto the product rather than a picture pasted into a box. */}
+            <div className="pointer-events-none absolute left-0 top-1/2 w-[1000px] -translate-y-1/2 origin-left scale-[0.62] xl:scale-[0.7]">
+              <div className="overflow-hidden rounded-xl border border-line shadow-e3">
+                <ProductPreview />
               </div>
             </div>
+            <div className="h-[440px]" />
           </div>
         </div>
       </section>
@@ -166,24 +167,26 @@ export default async function LandingPage() {
         <div className="mx-auto max-w-6xl px-5 py-16 lg:py-20">
           <div className="text-center">
             <h2 className="text-[clamp(1.6rem,3vw,2.1rem)] font-semibold tracking-[-0.028em] text-ink">
-              Everything a delivery team needs.
+              Everything your team needs to deliver.
             </h2>
             <p className="mt-2.5 text-sm text-ink-2">
-              Built around the rules real projects actually have, not the ones that are easy to code.
+              Built around the rules real projects have, not the ones that are easy to code.
             </p>
           </div>
 
-          <div className="mt-11 grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-11 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {[
-              { icon: <IconList />, title: 'Projects and tasks', body: 'Every task belongs to one project, with a priority, an owner and any number of blocking tasks in the same project.' },
-              { icon: <IconPeople />, title: 'Assignment that holds', body: 'Only people on a project can be assigned to its work, and removing someone unassigns them from it.' },
-              { icon: <IconFilter />, title: 'Find anything', body: 'Search titles and descriptions, filter by project, status, assignee, priority and overdue. All of it on the server.' },
-              { icon: <IconCheck />, title: 'Act on many at once', body: 'Move, assign or reschedule a whole selection, and get told per task what applied and what was refused — and why.' },
-              { icon: <IconChart />, title: 'Know where you stand', body: 'Open, overdue, due this week, completed this week, split by status and by person, with eight weeks of throughput.' },
-              { icon: <IconHistory />, title: 'History you cannot rewrite', body: 'Every field change with its old and new value, every assignment, every comment. Permanent, including for managers.' },
+              { icon: <IconList />, title: 'Projects & Tasks', body: 'Organise work in projects. Break it into tasks with priorities, owners and blocking dependencies.' },
+              { icon: <IconPeople />, title: 'Smart Assignment', body: 'Only people on a project can be assigned its work. Remove someone and their assignments go with them.' },
+              { icon: <IconFilter />, title: 'Powerful Filters', body: 'Search titles and descriptions. Filter by project, status, assignee, priority and overdue — on the server.' },
+              { icon: <IconChart />, title: 'Insights & Reports', body: 'Open, overdue, due this week, completed. Split by status and by person, with eight weeks of throughput.' },
+              { icon: <IconHistory />, title: 'History & Transparency', body: 'Every change tracked with its old and new value. Full history, permanent, including for managers.' },
             ].map((f) => (
-              <div key={f.title} className="group bg-surface p-6 transition-colors hover:bg-surface-2">
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-line bg-canvas text-ink-2 transition-colors group-hover:text-accent">
+              <div
+                key={f.title}
+                className="rounded-xl border border-line bg-surface p-5 transition-shadow duration-200 hover:shadow-e2"
+              >
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-line bg-canvas text-ink-2">
                   {f.icon}
                 </span>
                 <h3 className="mt-4 text-sm font-semibold text-ink">{f.title}</h3>
@@ -264,16 +267,58 @@ export default async function LandingPage() {
       </section>
 
       {/* ----------------------------------------------------------- footer */}
-      <footer>
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-5 py-8">
-          <div className="flex items-center gap-2">
-            <Mark />
-            <span className="text-sm font-semibold tracking-tight text-ink">Cadence</span>
+      <footer className="border-t border-line bg-canvas">
+        <div className="mx-auto max-w-6xl px-5 py-12">
+          <div className="grid gap-10 md:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))]">
+            <div>
+              <div className="flex items-center gap-2">
+                <Mark />
+                <span className="text-sm font-semibold tracking-tight text-ink">Cadence</span>
+              </div>
+              <p className="mt-3 max-w-[16rem] text-xs leading-relaxed text-ink-2">
+                Clarity for every project.
+                <br />
+                Confidence in every delivery.
+              </p>
+            </div>
+
+            {[
+              { heading: 'Product', links: [['What it does', '#what'], ['Capabilities', '#capabilities'], ['How it is built', '#built'], ['Open the demo', '/login']] },
+              { heading: 'The build', links: [['Architecture', 'https://github.com/ShamiDubey/project-task-tracker/blob/main/docs/architecture.md'], ['Schema', 'https://github.com/ShamiDubey/project-task-tracker/blob/main/docs/schema.md'], ['Decisions', 'https://github.com/ShamiDubey/project-task-tracker/blob/main/docs/decisions.md'], ['Plan', 'https://github.com/ShamiDubey/project-task-tracker/blob/main/docs/plan.md']] },
+              { heading: 'Repository', links: [['Source', 'https://github.com/ShamiDubey/project-task-tracker'], ['The brief', 'https://github.com/ShamiDubey/project-task-tracker/blob/main/docs/brief.md'], ['Submission', 'https://github.com/ShamiDubey/project-task-tracker/blob/main/SUBMISSION.md'], ['AI prompts', 'https://github.com/ShamiDubey/project-task-tracker/blob/main/docs/ai-prompts.md']] },
+            ].map((col) => (
+              <div key={col.heading}>
+                <h3 className="text-xs font-semibold text-ink">{col.heading}</h3>
+                <ul className="mt-3 space-y-2">
+                  {col.links.map(([label, href]) => (
+                    <li key={label}>
+                      <a
+                        href={href}
+                        className="text-xs text-ink-2 transition-colors hover:text-ink"
+                        {...(href.startsWith('http') ? { target: '_blank', rel: 'noreferrer' } : {})}
+                      >
+                        {label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
-          <p className="text-xs text-ink-3">Clarity for every project. Confidence in every delivery.</p>
-          <p className="ml-auto text-xs text-ink-3">
-            An internal delivery tool, built as a take-home submission.
-          </p>
+
+          <div className="mt-10 flex flex-wrap items-center gap-3 border-t border-line pt-6">
+            <p className="text-xs text-ink-3">
+              An internal delivery tool, built as a take-home submission.
+            </p>
+            <a
+              href="https://github.com/ShamiDubey/project-task-tracker"
+              target="_blank"
+              rel="noreferrer"
+              className="ml-auto text-xs text-ink-3 transition-colors hover:text-ink"
+            >
+              github.com/ShamiDubey/project-task-tracker
+            </a>
+          </div>
         </div>
       </footer>
     </div>
