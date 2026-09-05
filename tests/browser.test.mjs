@@ -13,6 +13,7 @@
  *   npm run dev            # in one terminal
  *   npm run test:browser   # in another — re-seeds, then drives the browser
  */
+import { spawn } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 
 import { chromium } from 'playwright';
@@ -90,9 +91,6 @@ const statusButtons = () =>
 
 async function signIn(email, password = 'password123') {
   await page.goto(`${BASE}/login`, { waitUntil: 'networkidle' });
-  // The panel arrives at the end of the scroll-driven camera move.
-  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-  await page.waitForTimeout(700);
   await page.fill('input[name="email"]', email);
   await page.fill('input[name="password"]', password);
   await page.click('button[type="submit"]');
@@ -106,30 +104,22 @@ async function signOut() {
 }
 
 /* ------------------------------------------------------------- the scene */
-heading('The sign-in scene');
-await check('the login page loads and the pitch is visible', async () => {
+heading('The sign-in page');
+await check('the sign-in form is usable without scrolling', async () => {
   await page.goto(`${BASE}/login`, { waitUntil: 'networkidle' });
-  await page.waitForTimeout(900);
-  await shot('01-login-top');
-  return (await page.locator('text=Twelve client projects.').isVisible()) || 'headline missing';
-});
-await check('the canvas is drawing', async () => {
-  const drawn = await page.evaluate(() => {
-    const c = document.querySelector('canvas');
-    if (!c) return 'no canvas';
-    const ctx = c.getContext('2d');
-    const data = ctx.getImageData(0, 0, c.width, c.height).data;
-    for (let i = 3; i < data.length; i += 4) if (data[i] !== 0) return true;
-    return 'canvas is blank';
-  });
-  return drawn;
-});
-await check('scrolling brings the panel forward', async () => {
-  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-  await page.waitForTimeout(900);
-  await shot('02-login-scrolled');
+  await page.waitForTimeout(700);
+  await shot('01-login');
+  // The page previously put a scroll-driven hero in front of the form. The requirement now is that
+  // the first thing a visitor can do is sign in.
   const box = await page.locator('input[name="email"]').boundingBox();
-  return (box && box.width > 100) || 'the email field never became reachable';
+  const scrolls = await page.evaluate(() => document.body.scrollHeight > window.innerHeight + 4);
+  return (box && box.y < 900 && !scrolls) || `field at y=${box?.y}, page scrolls: ${scrolls}`;
+});
+await check('the product preview is rendered beside it', async () => {
+  return (await page.locator('text=The portfolio').count()) > 0 || 'preview missing';
+});
+await check('demo credentials are on the page', async () => {
+  return (await page.locator('text=priya@tracker.dev').count()) > 0 || 'missing';
 });
 
 /* ---------------------------------------------------------------- manager */
@@ -336,8 +326,8 @@ await check('search narrows the list', async () => {
 await check('a status filter chip applies', async () => {
   await page.goto(`${BASE}/tasks`, { waitUntil: 'networkidle' });
   await page.getByRole('button', { name: 'Blocked', exact: true }).click();
-  await page.waitForTimeout(1200);
-  return page.url().includes('status=blocked') || `url is ${page.url()}`;
+  const applied = await until(async () => page.url().includes('status=blocked'));
+  return applied || `url is ${page.url()}`;
 });
 await check('bulk move reports per-task successes AND rejections', async () => {
   // In Review is the one status where the batch is genuinely mixed: tasks with no unfinished
@@ -465,6 +455,21 @@ await check('the dashboard is usable at 390px with no sideways scroll', async ()
 });
 
 await browser.close();
+
+/**
+ * Leave the database in the demo state.
+ *
+ * This suite creates a project, moves tasks to Done and edits a due date. Re-seeding only at the
+ * start meant whatever ran last left its mess behind — and the mess is what a reviewer opening the
+ * live app would see. It showed up as a stray "Browser Test Project" in the portfolio and a task
+ * reported as 233 days late because this suite had set its due date to January.
+ */
+console.log('\n  restoring the demo data…');
+await new Promise((resolve, reject) => {
+  const child = spawn('npm', ['run', 'db:seed', '--silent'], { stdio: 'ignore', shell: false });
+  child.on('close', (code) => (code === 0 ? resolve() : reject(new Error(`seed exited ${code}`))));
+  child.on('error', reject);
+});
 
 console.log(`\n${'='.repeat(64)}`);
 console.log(`  ${pass} passed, ${fail} failed`);

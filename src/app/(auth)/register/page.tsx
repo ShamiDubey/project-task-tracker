@@ -12,7 +12,7 @@ export default async function RegisterPage() {
 
   return (
     <>
-      <h1 className="text-xl font-semibold tracking-tight text-ink">Create your account</h1>
+      <h1 className="text-[26px] font-semibold tracking-[-0.025em] text-ink">Create your account</h1>
       <p className="mt-1.5 text-sm text-ink-2">Takes a moment. You will land on your dashboard.</p>
 
       <div className="mt-6">
