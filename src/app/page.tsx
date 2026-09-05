@@ -139,7 +139,7 @@ export default async function LandingPage() {
       </section>
 
       {/* ------------------------------------------------------ trust strip */}
-      <section id="what" className="border-b border-line bg-surface">
+      <section id="what" className="scroll-mt-20 border-b border-line bg-surface">
         <div className="mx-auto max-w-6xl px-5 py-12">
           <p className="text-center text-sm text-ink-2">
             One tool replacing spreadsheets, chat threads, and due dates that only live in people’s heads.
@@ -164,7 +164,7 @@ export default async function LandingPage() {
       </section>
 
       {/* ------------------------------------------------------- capabilities */}
-      <section id="capabilities" className="border-b border-line">
+      <section id="capabilities" className="scroll-mt-20 border-b border-line">
         <div className="mx-auto max-w-6xl px-5 py-16 lg:py-20">
           <div className="text-center">
             <h2 className="text-[clamp(1.6rem,3vw,2.1rem)] font-semibold tracking-[-0.028em] text-ink">
@@ -230,61 +230,6 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ----------------------------------------------------------- footer */}
-      <footer className="border-t border-line bg-canvas">
-        <div className="mx-auto max-w-6xl px-5 py-12">
-          <div className="grid gap-10 md:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))]">
-            <div>
-              <div className="flex items-center gap-2">
-                <Mark />
-                <span className="text-sm font-semibold tracking-tight text-ink">Cadence</span>
-              </div>
-              <p className="mt-3 max-w-[16rem] text-xs leading-relaxed text-ink-2">
-                Clarity for every project.
-                <br />
-                Confidence in every delivery.
-              </p>
-            </div>
-
-            {[
-              { heading: 'Product', links: [['What it does', '#what'], ['Capabilities', '#capabilities'], ['Sign in', '/login']] },
-              { heading: 'The build', links: [['Architecture', 'https://github.com/ShamiDubey/project-task-tracker/blob/main/docs/architecture.md'], ['Schema', 'https://github.com/ShamiDubey/project-task-tracker/blob/main/docs/schema.md'], ['Decisions', 'https://github.com/ShamiDubey/project-task-tracker/blob/main/docs/decisions.md'], ['Plan', 'https://github.com/ShamiDubey/project-task-tracker/blob/main/docs/plan.md']] },
-              { heading: 'Repository', links: [['Source', 'https://github.com/ShamiDubey/project-task-tracker'], ['The brief', 'https://github.com/ShamiDubey/project-task-tracker/blob/main/docs/brief.md'], ['Submission', 'https://github.com/ShamiDubey/project-task-tracker/blob/main/SUBMISSION.md'], ['AI prompts', 'https://github.com/ShamiDubey/project-task-tracker/blob/main/docs/ai-prompts.md']] },
-            ].map((col) => (
-              <div key={col.heading}>
-                <h3 className="text-xs font-semibold text-ink">{col.heading}</h3>
-                <ul className="mt-3 space-y-2">
-                  {col.links.map(([label, href]) => (
-                    <li key={label}>
-                      <a
-                        href={href}
-                        className="text-xs text-ink-2 transition-colors hover:text-ink"
-                        {...(href.startsWith('http') ? { target: '_blank', rel: 'noreferrer' } : {})}
-                      >
-                        {label}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-10 flex flex-wrap items-center gap-3 border-t border-line pt-6">
-            <p className="text-xs text-ink-3">
-              An internal delivery tool, built as a take-home submission.
-            </p>
-            <a
-              href="https://github.com/ShamiDubey/project-task-tracker"
-              target="_blank"
-              rel="noreferrer"
-              className="ml-auto text-xs text-ink-3 transition-colors hover:text-ink"
-            >
-              github.com/ShamiDubey/project-task-tracker
-            </a>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

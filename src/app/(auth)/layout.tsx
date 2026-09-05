@@ -16,9 +16,9 @@ import { ThemeToggle } from '@/components/theme';
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-full items-center justify-center bg-canvas p-4 sm:p-8">
-      <div className="grid w-full max-w-[1180px] overflow-hidden rounded-2xl border border-line bg-surface shadow-e3 lg:min-h-[660px] lg:grid-cols-2">
+      <div className="grid w-full max-w-[1180px] overflow-hidden rounded-2xl border border-line bg-surface shadow-e3 lg:h-[640px] lg:grid-cols-2">
         {/* ------------------------------------------------------ brand panel */}
-        <div className="relative hidden overflow-hidden bg-[#0e0e12] lg:block">
+        <div className="relative hidden overflow-hidden bg-[#0e0e12] lg:block lg:h-[640px]">
           {/* One pool of brand light, so the panel reads lit rather than flat. */}
           <div
             aria-hidden
