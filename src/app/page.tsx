@@ -201,45 +201,84 @@ export default async function LandingPage() {
 
       {/* ------------------------------------------------------- dark band */}
       <section id="built" className="bg-[#0e0e12]">
-        <div className="mx-auto max-w-6xl px-5 py-16 lg:py-20">
-          <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-20">
+        <div className="mx-auto max-w-6xl px-5 py-20 lg:py-24">
+          <div className="grid gap-12 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:gap-16">
+            {/* --------------------------------------------------------- copy */}
             <div>
-              <h2 className="max-w-md text-[clamp(1.6rem,3vw,2.1rem)] font-semibold leading-tight tracking-[-0.028em] text-white">
-                Built so the rules cannot be broken.
+              <p className="text-xs font-medium uppercase tracking-[0.12em] text-white/35">
+                How it is built
+              </p>
+              <h2 className="mt-4 max-w-[15ch] text-[clamp(1.7rem,2.6vw,2.2rem)] font-semibold leading-[1.14] tracking-[-0.028em] text-white">
+                The rules are held by the database.
               </h2>
-              <p className="mt-4 max-w-md text-sm leading-relaxed text-white/55">
-                The parts that matter are held by the database rather than by hopeful application
-                code. A task cannot be blocked by work in another project. Someone who is not on a
-                project cannot be assigned to its tasks. A finished task cannot be marked done while
-                something it depends on is unfinished.
+              <p className="mt-5 max-w-[36ch] text-[15px] leading-[1.65] text-white/50">
+                Not by application code that has to remember them. Every writer — a form, a bulk
+                action, a seed script — meets the same refusal, so an invariant cannot quietly rot
+                the day somebody adds a new one.
               </p>
 
-              <dl className="mt-10 grid grid-cols-3 gap-6 border-t border-white/10 pt-8">
+              <dl className="mt-9 grid grid-cols-3 gap-6 border-t border-white/10 pt-7">
                 {[
-                  { n: '158', l: 'automated checks, across four suites' },
-                  { n: '17', l: 'illegal writes the database refuses' },
-                  { n: '0', l: 'ways to edit the audit trail' },
+                  { n: '160', l: 'automated\nchecks' },
+                  { n: '17', l: 'illegal writes\nrefused' },
+                  { n: '0', l: 'ways to edit\nthe history' },
                 ].map((s) => (
                   <div key={s.l}>
-                    <dt className="text-[26px] font-semibold leading-none tabular-nums text-white">{s.n}</dt>
-                    <dd className="mt-2 text-xs leading-relaxed text-white/45">{s.l}</dd>
+                    <dt className="text-[30px] font-semibold leading-none tabular-nums text-white">
+                      {s.n}
+                    </dt>
+                    <dd className="mt-2.5 whitespace-pre-line text-xs leading-[1.5] text-white/40">
+                      {s.l}
+                    </dd>
                   </div>
                 ))}
               </dl>
             </div>
 
-            <div className="rounded-xl border border-white/10 bg-white/[0.04] p-7">
-              <p className="text-xs font-medium uppercase tracking-[0.11em] text-white/40">
-                The two questions
-              </p>
-              <p className="mt-5 text-lg leading-relaxed text-white/85">
-                “A manager finds out a deadline was missed when the client brings it up, not before.
-                Nobody can say what is overdue across the whole portfolio, or which of their people is
-                quietly buried while another has nothing this week.”
-              </p>
-              <p className="mt-5 text-sm leading-relaxed text-white/45">
-                That is the problem this was built for. Both questions are answered on the first screen
-                after signing in — not buried in a report someone has to go and run.
+            {/* ------------------------------------------------ what it refuses
+                Real constraint names from the schema, and the real reason each one exists. It shows
+                the engineering rather than describing it, and every line is checkable against
+                drizzle/0000_init.sql. */}
+            <div className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.03]">
+              <div className="flex items-center gap-2 border-b border-white/10 px-5 py-3.5">
+                <span className="flex gap-1.5" aria-hidden>
+                  <span className="h-2 w-2 rounded-full bg-white/15" />
+                  <span className="h-2 w-2 rounded-full bg-white/15" />
+                  <span className="h-2 w-2 rounded-full bg-white/15" />
+                </span>
+                <p className="ml-1 text-xs font-medium text-white/55">
+                  Writes Postgres will not accept
+                </p>
+              </div>
+
+              <ul className="divide-y divide-white/[0.07]">
+                {[
+                  ['A task blocked by work in another project', 'task_dependencies_blocking_fk'],
+                  ['Assigning somebody who is not on the project', 'task_assignees_membership_fk'],
+                  ['Blocked, with no record of where it came from', 'tasks_blocked_state_consistent'],
+                  ['Finished, with no completion time', 'tasks_completed_at_consistent'],
+                  ['A task blocking itself', 'task_dependencies_no_self_block'],
+                ].map(([rule, constraint]) => (
+                  <li key={constraint} className="flex items-start gap-3 px-5 py-3">
+                    <span
+                      aria-hidden
+                      className="mt-[3px] flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#c0362c]/15 text-[10px] font-bold text-[#f28b82]"
+                    >
+                      ✕
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-[13px] leading-snug text-white/85">{rule}</span>
+                      <span className="mt-1 block font-mono text-[11px] text-white/30">
+                        {constraint}
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+
+              <p className="border-t border-white/10 px-5 py-3.5 text-xs leading-relaxed text-white/40">
+                Each one was verified by attempting the write and confirming the database refused it.
+                A constraint nobody has watched fire is not a constraint.
               </p>
             </div>
           </div>
