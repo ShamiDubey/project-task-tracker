@@ -37,10 +37,10 @@ export function RegisterForm() {
           className={fieldClass}
         />
       </Field>
-      <p className="text-xs text-ink-2">
-        New accounts are members. Managers are granted by an existing manager, never chosen here.
-      </p>
       <Submit />
+      <p className="text-center text-xs text-ink-3">
+        New accounts start as members — managers grant the role.
+      </p>
     </form>
   );
 }

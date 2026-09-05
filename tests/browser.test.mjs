@@ -140,7 +140,8 @@ await check('the sign-in page stays focused on the form', async () => {
   return (/sign in/i.test(heading) && !hasPreview) || `heading "${heading}", preview: ${hasPreview}`;
 });
 await check('it links back to the landing page', async () => {
-  return (await page.getByRole('link', { name: /Back to site/ }).count()) > 0 || 'no way back';
+  const home = page.locator('header a[href="/"]');
+  return (await home.count()) > 0 || 'nothing in the header links to /';
 });
 await check('demo credentials are NOT on the page', async () => {
   // They belong in SUBMISSION.md, not in the product. A login screen advertising working accounts

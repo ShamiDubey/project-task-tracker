@@ -1,85 +1,44 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
-import { IconArrowRight } from '@/components/icons';
 import { ThemeToggle } from '@/components/theme';
 
 /**
- * The sign-in surface.
+ * The auth surface: one card, centred, and nothing else asking for attention.
  *
- * Deliberately small and centred. Earlier versions tried to do two jobs at once — first a
- * scroll-driven hero, then a split panel carrying a product shot — and both got in the way of the
- * one thing anybody is here to do. The landing page now carries the argument for the product, so
- * this page only has to take a password and get out of the way, which is what the sign-in screens of
- * the products worth copying actually do.
- *
- * The card is the only object on the page. Everything else is a quiet frame around it.
+ * An earlier version stacked a three-point feature list under the form to fill the space. It filled
+ * it the way clutter fills a desk — the landing page already makes the case for the product, and a
+ * person on this screen has decided; the only job left is the password. Premium here is what has
+ * been left out.
  */
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="relative flex min-h-full flex-col bg-canvas">
-      {/* A fine grid, faded out well before it reaches the card. Texture, not decoration. */}
+      {/* A whisper of the grid the landing page uses, faded before it reaches the card. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-60"
+        className="pointer-events-none absolute inset-0 opacity-40"
         style={{
           backgroundImage:
             'linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px)',
           backgroundSize: '44px 44px',
-          maskImage: 'radial-gradient(ellipse 60% 55% at 50% 45%, transparent 25%, black 85%)',
+          maskImage: 'radial-gradient(ellipse 65% 60% at 50% 42%, transparent 30%, black 90%)',
         }}
       />
 
       <header className="relative flex items-center justify-between px-5 py-5 sm:px-8">
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2" aria-label="Back to the Cadence site">
           <Mark />
           <span className="text-[15px] font-semibold tracking-tight text-ink">Cadence</span>
         </Link>
-        <div className="flex items-center gap-3">
-          <ThemeToggle />
-          <Link
-            href="/"
-            className="hidden items-center gap-1 text-sm text-ink-2 transition-colors hover:text-ink sm:flex"
-          >
-            Back to site
-            <IconArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </div>
+        <ThemeToggle />
       </header>
 
-      <main className="relative flex flex-1 items-center justify-center px-5 py-8">
-        <div className="w-full max-w-[400px]">
-          <div className="rounded-xl border border-line bg-surface p-7 shadow-e2">{children}</div>
-
-          {/* What is behind the door. The card alone left the page reading as unfinished, and these
-              are the three things worth knowing before signing in. */}
-          <ul className="mt-6 divide-y divide-line rounded-xl border border-line bg-surface/60">
-            {[
-              ['Two roles, enforced on the server', 'Managers run the portfolio. Members see only the projects they are on — and typing a URL does not get them further.'],
-              ['A portfolio with something to show', 'Five active projects, an archived one, overdue work, blocked chains and eight weeks of history.'],
-              ['Rules the database holds', 'Cross-project dependencies, assigning a non-member and finishing blocked work are all refused outright.'],
-            ].map(([title, body]) => (
-              <li key={title} className="flex gap-3 px-4 py-3">
-                <span className="mt-[3px] flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-accent-soft">
-                  <svg viewBox="0 0 10 10" className="h-2.5 w-2.5 text-accent" aria-hidden>
-                    <path d="m1.6 5.2 2.2 2.2 4.6-5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </span>
-                <span>
-                  <span className="block text-xs font-medium text-ink">{title}</span>
-                  <span className="mt-0.5 block text-xs leading-relaxed text-ink-2">{body}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
+      <main className="relative flex flex-1 items-start justify-center px-5 pb-24 pt-[12vh]">
+        <div className="w-full max-w-[384px]">
+          <div className="rounded-2xl border border-line bg-surface p-8 shadow-e2">{children}</div>
         </div>
       </main>
-
-      <footer className="relative px-5 pb-6 text-center sm:px-8">
-        <p className="text-xs text-ink-3">
-          An internal delivery tool for a services company running a dozen client projects.
-        </p>
-      </footer>
     </div>
   );
 }
