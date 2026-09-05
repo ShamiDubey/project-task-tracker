@@ -12,6 +12,7 @@ import { logout } from '@/app/actions/auth';
 import { CommandPalette } from '@/components/command-palette';
 import {
   IconAlert,
+  IconBoard,
   IconDashboard,
   IconInbox,
   IconList,
@@ -35,6 +36,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   ];
   const portfolio = [
     { href: '/tasks', label: 'All tasks', icon: <IconList /> },
+    { href: '/board', label: 'Board', icon: <IconBoard /> },
     { href: '/projects', label: 'Projects', icon: <IconProjects /> },
   ];
 

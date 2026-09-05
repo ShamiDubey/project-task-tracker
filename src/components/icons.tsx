@@ -157,3 +157,18 @@ export const IconHistory = (p: IconProps) => (
     <path d="M8 5.2V8l2 1.4" />
   </Svg>
 );
+
+export const IconBoard = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="1.9" y="2.4" width="3.4" height="11.2" rx="1" />
+    <rect x="6.3" y="2.4" width="3.4" height="7.4" rx="1" />
+    <rect x="10.7" y="2.4" width="3.4" height="9" rx="1" />
+  </Svg>
+);
+
+export const IconClockSmall = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="8" cy="8" r="6.1" />
+    <path d="M8 4.5V8l2.4 1.6" />
+  </Svg>
+);

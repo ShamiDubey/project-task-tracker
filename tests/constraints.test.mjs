@@ -90,6 +90,14 @@ await accepts('removing them from the project takes the assignment with it', asy
   if (n !== 0) throw new Error(`${n} assignment(s) survived`);
 });
 
+console.log('\nTime tracking (stretch feature)');
+await refuses('zero minutes logged',
+  () => sql`insert into time_entries (task_id, minutes, spent_on) values (${a1.id}, 0, current_date)`);
+await refuses('an absurd duration (over 24h)',
+  () => sql`insert into time_entries (task_id, minutes, spent_on) values (${a1.id}, 5000, current_date)`);
+await accepts('a normal 90-minute entry',
+  () => sql`insert into time_entries (task_id, minutes, spent_on) values (${a1.id}, 90, current_date)`);
+
 console.log('\nShape of the data');
 await refuses('a lowercase project key',
   () => sql`insert into projects (key, name, owner_id) values ('bad', 'B', ${alice.id})`);

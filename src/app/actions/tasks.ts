@@ -11,6 +11,7 @@ import {
   taskAssignees,
   taskDependencies,
   tasks,
+  timeEntries,
   type TaskStatus,
 } from '@/db/schema';
 import {
@@ -459,3 +460,42 @@ export async function dismissAlert(taskId: string): Promise<ActionState> {
 }
 
 
+
+/* --------------------------------------------------------------- time tracking */
+
+/**
+ * Log a stretch of time against a task — a stretch feature, kept off the main mutation paths.
+ *
+ * A member may log time on any task in a project they belong to. The value is validated at the
+ * boundary and again by a database check constraint, so a nonsensical duration cannot be stored
+ * even if the form is bypassed.
+ */
+export async function logTime(
+  taskId: string,
+  minutes: number,
+  spentOn: string,
+  note: string,
+): Promise<ActionState> {
+  try {
+    const { user, task } = await loadTaskForActor(taskId);
+    await requireTaskWriteAccess(user, task.projectId);
+
+    if (!Number.isInteger(minutes) || minutes <= 0 || minutes > 1440) {
+      return { error: 'Enter between 1 and 1440 minutes.' };
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(spentOn)) return { error: 'Choose a valid date.' };
+
+    await db.insert(timeEntries).values({
+      taskId,
+      userId: user.id,
+      minutes,
+      spentOn,
+      note: note.trim().slice(0, 500),
+    });
+
+    revalidatePath(`/tasks/${taskId}`);
+    return { ok: 'Time logged.' };
+  } catch (err) {
+    return { error: toMessage(err) };
+  }
+}

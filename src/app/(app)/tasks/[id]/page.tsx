@@ -22,6 +22,7 @@ import {
   getBlocking,
   getTask,
   getTaskAssignees,
+  getTimeEntries,
   getTimeline,
   transitionContext,
 } from '@/lib/queries/task-detail';
@@ -36,6 +37,7 @@ import {
   StatusControls,
 } from './controls';
 import { Timeline } from './timeline';
+import { TimePanel } from './time-panel';
 
 export default async function TaskPage({ params }: PageProps<'/tasks/[id]'>) {
   const user = await requireUser();
@@ -50,7 +52,7 @@ export default async function TaskPage({ params }: PageProps<'/tasks/[id]'>) {
   // Goal 1.5 — a member cannot read a task in a project they are not on, even by direct link.
   if (!(await canViewProject(user, task.projectId))) notFound();
 
-  const [ctx, blockers, blocking, assignees, members, timeline, candidates, memberOfProject] =
+  const [ctx, blockers, blocking, assignees, members, timeline, candidates, memberOfProject, time] =
     await Promise.all([
       transitionContext(id),
       getBlockers(id),
@@ -60,6 +62,7 @@ export default async function TaskPage({ params }: PageProps<'/tasks/[id]'>) {
       getTimeline(id),
       candidateBlockers(task.projectId, id),
       isProjectMember(user, task.projectId),
+      getTimeEntries(id),
     ]);
 
   if (!ctx) notFound();
@@ -177,6 +180,11 @@ export default async function TaskPage({ params }: PageProps<'/tasks/[id]'>) {
                 </div>
               )}
             </dl>
+          </Card>
+
+          <Card>
+            <CardHeader title="Time tracked" subtitle="Logged against this task." />
+            <TimePanel taskId={id} entries={time.rows} total={time.total} canWrite={canWrite} />
           </Card>
 
           <Card>

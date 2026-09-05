@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { and, asc, eq, isNull, ne } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull, ne } from 'drizzle-orm';
 import { cache } from 'react';
 import { alias } from 'drizzle-orm/pg-core';
 
@@ -11,6 +11,7 @@ import {
   taskAssignees,
   taskDependencies,
   tasks,
+  timeEntries,
   users,
   type TaskStatus,
 } from '@/db/schema';
@@ -144,4 +145,23 @@ export async function candidateBlockers(projectId: string, taskId: string) {
     .from(tasks)
     .where(and(eq(tasks.projectId, projectId), ne(tasks.id, taskId), isNull(tasks.deletedAt)))
     .orderBy(asc(tasks.number));
+}
+
+/** Time logged against a task — the entries and their total. */
+export async function getTimeEntries(taskId: string) {
+  const rows = await db
+    .select({
+      id: timeEntries.id,
+      minutes: timeEntries.minutes,
+      spentOn: timeEntries.spentOn,
+      note: timeEntries.note,
+      createdAt: timeEntries.createdAt,
+      userName: users.name,
+    })
+    .from(timeEntries)
+    .leftJoin(users, eq(users.id, timeEntries.userId))
+    .where(eq(timeEntries.taskId, taskId))
+    .orderBy(desc(timeEntries.spentOn), desc(timeEntries.createdAt));
+  const total = rows.reduce((sum, r) => sum + r.minutes, 0);
+  return { rows, total };
 }

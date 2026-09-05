@@ -407,6 +407,39 @@ export const alertDismissals = pgTable(
   (t) => [primaryKey({ columns: [t.userId, t.taskId] })],
 );
 
+/* --------------------------------------------------------- time_entries */
+
+/**
+ * Time tracking — a stretch feature, deliberately its own table.
+ *
+ * Kept entirely separate from the eight core tables so it disturbs nothing: a task's time is the sum
+ * of its entries, never a mutable column on the task that two writers could disagree about, and the
+ * whole feature could be dropped by deleting this one table. Each row is one logged stretch of work.
+ */
+export const timeEntries = pgTable(
+  'time_entries',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    taskId: uuid('task_id')
+      .notNull()
+      .references(() => tasks.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
+    /** Minutes of work. An integer, because time sheets are not the place for floating point. */
+    minutes: integer('minutes').notNull(),
+    /** The calendar day the work was done, which is not always the day it was logged. */
+    spentOn: date('spent_on', { mode: 'string' }).notNull(),
+    note: text('note').notNull().default(''),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('time_entries_task_idx').on(t.taskId),
+    index('time_entries_user_idx').on(t.userId),
+    // A stretch of work is at least a minute and at most a long day; the bound keeps a fat-fingered
+    // "600" (meant as 60) from silently landing as ten hours.
+    check('time_entries_minutes_range', sql`${t.minutes} > 0 and ${t.minutes} <= 1440`),
+  ],
+);
+
 /* ------------------------------------------------------------------ types */
 
 export type User = typeof users.$inferSelect;
@@ -420,3 +453,4 @@ export type TaskStatus = (typeof taskStatus.enumValues)[number];
 export type TaskPriority = (typeof taskPriority.enumValues)[number];
 export type UserRole = (typeof userRole.enumValues)[number];
 export type ActivityType = (typeof activityType.enumValues)[number];
+export type TimeEntry = typeof timeEntries.$inferSelect;

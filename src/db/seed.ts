@@ -19,6 +19,7 @@ import {
   taskAssignees,
   taskDependencies,
   tasks,
+  timeEntries,
   users,
   type TaskPriority,
   type TaskStatus,
@@ -43,6 +44,7 @@ const today = new Date();
 async function main() {
   console.log('Clearing existing data...');
   // Order matters only for readability — every dependent table cascades from these two.
+  await db.delete(timeEntries);
   await db.delete(activity);
   await db.delete(alertDismissals);
   await db.delete(taskAssignees);
@@ -363,10 +365,33 @@ async function main() {
     }
   }
 
+  console.log('Logging time...');
+  // A handful of entries on tasks that are underway or done, so the demo shows real totals.
+  const timeRows: (typeof timeEntries.$inferInsert)[] = [];
+  for (const [key, specs] of Object.entries(taskSpecs)) {
+    for (const spec of specs) {
+      if (spec.status === 'backlog') continue;
+      const taskId = taskIdByKeyTitle.get(`${key}::${spec.title}`)!;
+      const who = spec.assignees[0] ? byEmail[spec.assignees[0]].id : null;
+      const sessions = spec.status === 'done' ? 3 : spec.status === 'in_review' ? 2 : 1;
+      for (let i = 0; i < sessions; i++) {
+        timeRows.push({
+          taskId,
+          userId: who,
+          minutes: 30 + Math.floor(rand() * 8) * 15, // 30–135 min in 15-min steps
+          spentOn: toISODate(addDays(today, -(2 + Math.floor(rand() * 20)))),
+          note: pick(['', '', 'Pairing session', 'Review and fixes', 'Investigation', 'Client call']),
+        });
+      }
+    }
+  }
+  await db.insert(timeEntries).values(timeRows);
+
   const counts = {
     users: createdUsers.length,
     projects: createdProjects.length,
     tasks: allTaskRows.length,
+    timeEntries: timeRows.length,
   };
   console.log('\nSeed complete:', counts);
   console.log(`\nSign in with any of these — password: ${PASSWORD}`);

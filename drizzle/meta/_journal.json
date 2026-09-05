@@ -15,6 +15,13 @@
       "when": 1788327788329,
       "tag": "0001_soft_delete_tasks",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788616796294,
+      "tag": "0002_time_tracking",
+      "breakpoints": true
     }
   ]
 }
