@@ -84,8 +84,15 @@ const outsider = await session('yuki@tracker.dev'); // on NOVA and HELIO, not AC
 const [acme] = await sql`select id, key from projects where key = 'ACME'`;
 const [pixel] = await sql`select id from projects where key = 'PIXEL'`; // archived
 const [anyAcmeTask] = await sql`
-  select t.id from tasks t join projects p on p.id = t.project_id
-  where p.key = 'ACME' and t.deleted_at is null limit 1`;
+  select t.id from tasks t
+  join projects p on p.id = t.project_id
+  where p.key = 'ACME' and t.deleted_at is null
+    and exists (
+      select 1 from activity a
+      where a.task_id = t.id and a.type = 'field_changed' and a.field = 'status'
+    )
+  order by t.number
+  limit 1`;
 
 /* ---------------------------------------------------------------- goal 1 */
 heading('GOAL 1 — accounts and roles');
