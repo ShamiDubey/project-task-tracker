@@ -184,22 +184,22 @@ export default async function DashboardPage() {
                       <span
                         className="reveal-line h-full bg-danger"
                         style={{ width: seg(p.overdue), ...delay(i) }}
-                        title={`${p.overdue} overdue`}
+                        title={`${p.overdue} overdue — past its due date, still open`}
                       />
                       <span
                         className="reveal-line h-full bg-warn"
                         style={{ width: seg(p.blocked), ...delay(i) }}
-                        title={`${p.blocked} blocked`}
+                        title={`${p.blocked} blocked — waiting on another task`}
                       />
                       <span
                         className="reveal-line h-full bg-accent"
                         style={{ width: seg(Math.max(0, p.open - p.overdue - p.blocked)), ...delay(i) }}
-                        title={`${p.open - p.overdue - p.blocked} in flight`}
+                        title={`${p.open - p.overdue - p.blocked} in flight — open and on track`}
                       />
                       <span
                         className="reveal-line h-full bg-good/45"
                         style={{ width: seg(p.done), ...delay(i) }}
-                        title={`${p.done} done`}
+                        title={`${p.done} done — completed`}
                       />
                     </span>
                     <span className="hidden w-24 shrink-0 text-right text-2xs text-ink-3 sm:block">
@@ -213,6 +213,14 @@ export default async function DashboardPage() {
               );
             })}
           </ul>
+            <ColorLegend
+              items={[
+                ['bg-danger', 'Overdue', 'Past due, still open'],
+                ['bg-warn', 'Blocked', 'Waiting on another task'],
+                ['bg-accent', 'In flight', 'Open and on track'],
+                ['bg-good/45', 'Done', 'Completed'],
+              ]}
+            />
         </Card>
       </section>
 
@@ -280,10 +288,12 @@ export default async function DashboardPage() {
                       <span className="flex h-2 flex-1 overflow-hidden rounded-full bg-sunk">
                         <span
                           className="reveal-line h-full bg-danger"
+                          title={`${person.overdue} overdue — past due, still open`}
                           style={{ width: `${busiest ? (person.overdue / busiest) * 100 : 0}%`, ...delay(i) }}
                         />
                         <span
                           className="reveal-line h-full bg-accent"
+                          title={`${person.open - person.overdue} open and on track`}
                           style={{ width: `${busiest ? ((person.open - person.overdue) / busiest) * 100 : 0}%`, ...delay(i) }}
                         />
                       </span>
@@ -296,6 +306,12 @@ export default async function DashboardPage() {
                 ))}
               </ul>
             )}
+            <ColorLegend
+              items={[
+                ['bg-danger', 'Overdue', 'Past due, still open'],
+                ['bg-accent', 'Open', 'Assigned and on track'],
+              ]}
+            />
           </Card>
         </div>
 
@@ -343,5 +359,23 @@ export default async function DashboardPage() {
         </div>
       </section>
     </>
+  );
+}
+
+/**
+ * A colour key for the segmented bars above it — always visible, since colour alone is not
+ * self-explanatory. Every bar segment also carries a title, so hovering gives the exact count.
+ */
+function ColorLegend({ items }: { items: [string, string, string][] }) {
+  return (
+    <ul className="flex flex-wrap gap-x-4 gap-y-1.5 border-t border-line px-4 py-2.5">
+      {items.map(([colour, label, hint]) => (
+        <li key={label} className="flex items-center gap-1.5">
+          <span className={cx('h-2 w-2 shrink-0 rounded-[3px]', colour)} aria-hidden />
+          <span className="text-2xs font-medium text-ink-2">{label}</span>
+          <span className="text-2xs text-ink-3">· {hint}</span>
+        </li>
+      ))}
+    </ul>
   );
 }
