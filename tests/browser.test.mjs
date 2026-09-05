@@ -131,13 +131,13 @@ await check('the sign-in form is usable without scrolling', async () => {
   const scrolls = await page.evaluate(() => document.body.scrollHeight > window.innerHeight + 4);
   return (box && box.y < 900 && !scrolls) || `field at y=${box?.y}, page scrolls: ${scrolls}`;
 });
-await check('the sign-in page stays focused on the form', async () => {
-  // The product shot lives on the landing page now. This page has one job.
+await check('the sign-in form is the working half of the split card', async () => {
+  // The brand panel carries the dashboard mock by design now; what must hold is that the form is
+  // present, reachable without scrolling, and headed as a sign-in.
   const heading = await page.locator('h1').first().innerText();
-  // The dashboard mock lives on the landing page. Matching prose containing "portfolio" was a false
-  // positive; its sidebar is what actually identifies it.
-  const hasPreview = (await page.locator('text=Delivery, in view').count()) > 0;
-  return (/sign in/i.test(heading) && !hasPreview) || `heading "${heading}", preview: ${hasPreview}`;
+  const email = await page.locator('input[name="email"]').boundingBox();
+  return (/sign in/i.test(heading) && email && email.y < 900) ||
+    `heading "${heading}", email field at ${email?.y}`;
 });
 await check('it links back to the landing page', async () => {
   const home = page.locator('header a[href="/"]');

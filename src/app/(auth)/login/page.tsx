@@ -13,7 +13,7 @@ export default async function LoginPage() {
   return (
     <>
       <h1 className="text-xl font-semibold tracking-[-0.02em] text-ink">Sign in</h1>
-      <p className="mt-2 text-sm text-ink-2">Welcome back.</p>
+      <p className="mt-2 text-sm text-ink-2">Welcome back — enter your details.</p>
 
       <div className="mt-6">
         <LoginForm />

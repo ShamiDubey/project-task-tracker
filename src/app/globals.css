@@ -74,7 +74,8 @@
    in one place instead of a change in fifty.
    -------------------------------------------------------------------------- */
 
-:root {
+:root,
+[data-theme='light'] {
   color-scheme: light;
 
   --canvas:        #fbfbfa;   /* faintly warm, so white surfaces read as raised */
