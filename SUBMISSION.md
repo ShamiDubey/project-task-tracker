@@ -84,9 +84,15 @@ interactive transaction, and a status change has to write its timeline row atomi
 | 9 | Immutable history | **Done, with one honest gap** | No update or delete path for activity rows anywhere, and deleting a task is a soft delete so its history survives. **The gap:** it's guaranteed by construction, not by Postgres — anyone with the connection string could still rewrite a row. Closing it needs a trigger plus revoked grants, which needs a privileged role Neon's free tier makes awkward. Written up in `docs/schema.md` rather than glossed. |
 | 10 | Overdue alerts | **Done** | Count badge in the nav. Dismissal is per person and stores the due date it was dismissed against, so the alert comes back on any change — including the changed-and-changed-back case a boolean gets wrong. Proved end to end: `3 open → dismiss → 2 → move due date → 3 → move it back → 2`. |
 
-**Stretch:** keyboard navigation via a ⌘K command palette; a drag-and-drop board that respects the
-lifecycle rules; and time tracking, in its own table so it disturbs nothing. Nothing else — the ten
-came first.
+### Stretch features (optional in the brief — built after the ten were solid)
+
+| Feature | Notes |
+|---|---|
+| **Drag-and-drop board** (`/board`) | Cards in status columns. A drop goes through the same `changeTaskStatus` as everywhere else, so the lifecycle rules still govern — drag a Backlog card onto Done and the server refuses with a reason and the card snaps back. Native HTML5 drag, no dependency. |
+| **Time tracking** | On each task detail page. Its own `time_entries` table so it disturbs nothing — a task's total is the sum of its entries, and a DB check bounds each to 1–1440 minutes. |
+| **Keyboard navigation** | ⌘K command palette — jump to any task, project or filtered view without the mouse. |
+
+I stopped there. The ten goals came first, and doing three stretch features well beats starting five.
 
 **One caveat on Goal 6, because a reviewer would be right to ask.** The task list is genuinely
 server-paged: 25 rows plus a count, whatever the filters. The command palette, separately, fetches up
