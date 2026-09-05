@@ -201,17 +201,27 @@ export default async function LandingPage() {
       {/* -------------------------------------------------------- final CTA */}
       <section className="border-b border-line bg-surface">
         <div className="mx-auto max-w-6xl px-5 py-12">
-          <div className="flex flex-wrap items-center gap-6 rounded-xl border border-line bg-canvas px-7 py-6">
+          {/*
+            The one dark object on the page.
+
+            It is the last thing before the footer and the only remaining call to action, so it
+            carries the weight the removed section used to. Fixed near-black rather than a theme
+            token, and the button inverts to white on it — a dark button on a dark card would
+            disappear, and the accent violet is reserved for status meaning elsewhere.
+          */}
+          <div className="flex flex-wrap items-center gap-6 rounded-xl bg-[#0e0e12] px-8 py-8 shadow-e2 ring-1 ring-white/10">
             <div className="min-w-0 flex-1">
-              <h2 className="text-base font-semibold text-ink">Have a look around.</h2>
-              <p className="mt-1 text-sm text-ink-2">
+              <h2 className="text-[19px] font-semibold tracking-[-0.02em] text-white">
+                Have a look around.
+              </h2>
+              <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/55">
                 Seeded with a full portfolio — overdue work, blocked chains, an uneven workload and
                 eight weeks of history.
               </p>
             </div>
             <Link
               href={user ? '/dashboard' : '/login'}
-              className="sheen inline-flex shrink-0 items-center gap-2 rounded-lg bg-ink px-5 py-2.5 text-sm font-medium text-canvas transition-colors hover:bg-ink/90"
+              className="sheen inline-flex shrink-0 items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-medium text-[#0e0e12] transition-colors hover:bg-white/90"
             >
               {user ? 'Open the app' : 'Sign in'}
               <IconArrowRight className="h-4 w-4" />
