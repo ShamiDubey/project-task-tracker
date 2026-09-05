@@ -17,7 +17,7 @@ import { cx } from './ui';
 export function Table({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <div className={cx('scroll-x', className)}>
-      <table className="w-full border-collapse text-left">{children}</table>
+      <table className="w-full table-fixed border-collapse text-left">{children}</table>
     </div>
   );
 }
