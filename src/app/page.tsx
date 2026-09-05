@@ -75,65 +75,64 @@ export default async function LandingPage() {
 
       {/* ------------------------------------------------------------ hero */}
       <section className="relative border-b border-line">
-        <div className="mx-auto max-w-6xl px-5 pb-14 pt-14 lg:pb-16 lg:pt-20">
-          {/*
-            The product shot sits below the copy rather than beside it.
-
-            Beside it, the arithmetic does not work: the right column is 443px at this container
-            width, so a 1000px screenshot has to shrink to 0.44 to fit — at which point the interface
-            inside it is illegible, and the only way to keep it readable was to let it run 197px past
-            the right margin and be chopped by the edge of the screen. Full width below, it lands
-            exactly on the page's margins and is larger than it ever was beside the text.
-          */}
-          <div className="max-w-3xl">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 pb-16 pt-14 lg:grid-cols-[minmax(0,1.12fr)_minmax(0,1fr)] lg:pb-20 lg:pt-18">
+          <div>
             <span className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3.5 py-1.5 text-[13px] font-medium text-ink-2">
               <span className="h-2 w-2 rounded-full bg-good" aria-hidden />
               Built for services teams that deliver
             </span>
 
-            <h1 className="mt-7 text-[clamp(2.1rem,4.2vw,3rem)] font-semibold leading-[1.07] tracking-[-0.035em] text-ink">
+            <h1 className="mt-6 text-[clamp(1.85rem,3.2vw,2.5rem)] font-semibold leading-[1.08] tracking-[-0.032em] text-ink">
               Clarity for every project.
               <br />
               Confidence in every delivery.
             </h1>
 
-            <p className="mt-6 max-w-[38rem] text-[17px] leading-[1.6] text-ink-2">
+            <p className="mt-5 max-w-[33rem] text-[15px] leading-[1.62] text-ink-2">
               Cadence brings your projects, tasks, people and deadlines together in one place — so
               nothing slips, and anyone can answer{' '}
               <span className="text-ink">what is overdue</span> and{' '}
               <span className="text-ink">who is overloaded</span> without asking around.
             </p>
 
-            <div className="mt-8 flex flex-wrap items-center gap-3">
+            <div className="mt-7 flex flex-wrap items-center gap-3">
               <Link
                 href={user ? '/dashboard' : '/login'}
-                className="sheen inline-flex items-center gap-2 rounded-xl bg-ink px-6 py-3.5 text-[15px] font-medium text-canvas shadow-e2 transition-colors hover:bg-ink/90"
+                className="sheen inline-flex items-center gap-2 rounded-xl bg-ink px-5 py-3 text-sm font-medium text-canvas shadow-e2 transition-colors hover:bg-ink/90"
               >
                 {user ? 'Open the app' : 'Sign in'}
                 <IconArrowRight className="h-4 w-4" />
               </Link>
               <Link
                 href="/register"
-                className="inline-flex items-center rounded-xl border border-line-strong bg-surface px-6 py-3.5 text-[15px] font-medium text-ink transition-colors hover:bg-surface-2"
+                className="inline-flex items-center rounded-xl border border-line-strong bg-surface px-5 py-3 text-sm font-medium text-ink transition-colors hover:bg-surface-2"
               >
                 Create an account
               </Link>
             </div>
 
-            <ul className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] text-ink-2">
+            <ul className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-ink-2">
               {['Manager and member accounts', 'Seeded portfolio', 'Roles enforced on the server'].map((t) => (
                 <li key={t} className="flex items-center gap-1.5">
-                  <IconCheck className="h-4 w-4 text-good" />
+                  <IconCheck className="h-3.5 w-3.5 text-good" />
                   {t}
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* The application, at full container width. `zoom` rather than `transform: scale` so the
-              wrapper actually reflows to the scaled size and nothing overflows the margin. */}
-          <div className="mt-14 hidden overflow-hidden rounded-xl border border-line bg-surface shadow-e3 md:block">
-            <div style={{ zoom: 1.112 }}>
+          {/*
+            The application, beside the copy and inside the margin.
+
+            The mock is built at 640px rather than the real 1000px precisely so it can live here: at
+            1000px it would need to shrink to 0.44 to fit this column and the interface inside would
+            be unreadable, which is why an earlier version was allowed to run 197px past the right
+            margin instead. `zoom` rather than `transform: scale` so the wrapper reflows to the
+            scaled size — a transform leaves the element occupying its unscaled box, which is exactly
+            what let it overflow.
+          */}
+          <div className="hidden justify-self-end overflow-hidden rounded-xl border border-line bg-surface shadow-e3 lg:block">
+            <div style={{ zoom: 0.78 }}>
               <ProductPreview />
             </div>
           </div>
