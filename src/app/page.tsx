@@ -75,64 +75,66 @@ export default async function LandingPage() {
 
       {/* ------------------------------------------------------------ hero */}
       <section className="relative overflow-hidden border-b border-line">
-        <div className="mx-auto grid max-w-6xl items-center gap-12 px-5 py-16 lg:grid-cols-[minmax(0,1.28fr)_minmax(0,1fr)] lg:py-24">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 pb-16 pt-12 lg:grid-cols-[minmax(0,1.42fr)_minmax(0,1fr)] lg:pb-20 lg:pt-16">
           <div className="reveal" style={{ '--i': 0 } as React.CSSProperties}>
-            <span className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1 text-xs font-medium text-ink-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-good" aria-hidden />
+            <span className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3.5 py-1.5 text-[13px] font-medium text-ink-2">
+              <span className="h-2 w-2 rounded-full bg-good" aria-hidden />
               Built for services teams that deliver
             </span>
 
-            <h1 className="mt-6 text-[clamp(1.85rem,3.2vw,2.45rem)] font-semibold leading-[1.1] tracking-[-0.03em] text-balance text-ink">
+            {/* The largest thing on the page by a distance. At this size the two lines carry the
+                whole argument, so everything below can be quiet. */}
+            <h1 className="mt-7 text-[clamp(2rem,3.6vw,2.85rem)] font-semibold leading-[1.06] tracking-[-0.035em] text-ink">
               Clarity for every project.
               <br />
               Confidence in every delivery.
             </h1>
 
-            <p className="mt-5 max-w-lg text-[15px] leading-relaxed text-ink-2">
-              Cadence brings projects, tasks, people and deadlines into one place — so nothing slips,
-              and anyone can answer <em className="not-italic text-ink">what is overdue</em> and{' '}
-              <em className="not-italic text-ink">who is overloaded</em> without asking around.
+            <p className="mt-6 max-w-[34rem] text-[17px] leading-[1.65] text-ink-2">
+              Cadence brings your projects, tasks, people and deadlines together in one place — so
+              nothing slips, and anyone can answer{' '}
+              <span className="text-ink">what is overdue</span> and{' '}
+              <span className="text-ink">who is overloaded</span> without asking around.
             </p>
 
-            <div className="mt-8 flex flex-wrap items-center gap-3">
+            <div className="mt-9 flex flex-wrap items-center gap-3">
               <Link
                 href={user ? '/dashboard' : '/login'}
-                className="sheen inline-flex items-center gap-2 rounded-lg bg-ink px-5 py-2.5 text-sm font-medium text-canvas shadow-e1 transition-colors hover:bg-ink/90"
+                className="sheen inline-flex items-center gap-2 rounded-xl bg-ink px-6 py-3.5 text-[15px] font-medium text-canvas shadow-e2 transition-colors hover:bg-ink/90"
               >
-                {user ? 'Open the app' : 'Open the demo'}
+                {user ? 'Open the app' : 'Sign in'}
                 <IconArrowRight className="h-4 w-4" />
               </Link>
-              <a
-                href="#what"
-                className="inline-flex items-center rounded-lg border border-line-strong bg-surface px-5 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-surface-2"
+              <Link
+                href="/register"
+                className="inline-flex items-center rounded-xl border border-line-strong bg-surface px-6 py-3.5 text-[15px] font-medium text-ink transition-colors hover:bg-surface-2"
               >
-                See what it does
-              </a>
+                Create an account
+              </Link>
             </div>
 
-            <ul className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-ink-2">
-              {['Manager and member accounts', 'Seeded portfolio', 'No sign-up'].map((t) => (
+            <ul className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] text-ink-2">
+              {['Manager and member accounts', 'Seeded portfolio', 'No sign-up needed'].map((t) => (
                 <li key={t} className="flex items-center gap-1.5">
-                  <IconCheck className="h-3.5 w-3.5 text-good" />
+                  <IconCheck className="h-4 w-4 text-good" />
                   {t}
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* The real interface, bled off the right edge so it reads as a window into the product. */}
           <div
             className="reveal relative hidden lg:block"
             style={{ '--i': 2 } as React.CSSProperties}
           >
             {/* The whole application, scaled down and bled off the right edge so it reads as a
                 window onto the product rather than a picture pasted into a box. */}
-            <div className="pointer-events-none absolute left-0 top-1/2 w-[1000px] -translate-y-1/2 origin-left scale-[0.62] xl:scale-[0.7]">
+            <div className="pointer-events-none absolute left-0 top-1/2 w-[1000px] -translate-y-1/2 origin-left scale-[0.58] xl:scale-[0.66]">
               <div className="overflow-hidden rounded-xl border border-line shadow-e3">
                 <ProductPreview />
               </div>
             </div>
-            <div className="h-[440px]" />
+            <div className="h-[470px]" />
           </div>
         </div>
       </section>
