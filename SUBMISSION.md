@@ -3,7 +3,7 @@
 ## Links
 
 - **GitHub repository:** https://github.com/ShamiDubey/project-task-tracker
-- **Live application:** _not yet deployed — see “Hosting” below_
+- **Live application:** https://cadence-a-project-task-tracker.vercel.app
 
 ## Notes for the reviewer
 
@@ -37,7 +37,7 @@ the application and split it into commits afterwards rather than committing as I
 the brief asks against. Everything from 2 Sep onward is genuinely incremental. `docs/plan.md` sets
 out the specifics rather than leaving them to be found.
 
-**Verification.** `npm test` runs 158 checks in four suites: the transition rules, the database
+**Verification.** `npm test` runs 160 checks in four suites: the transition rules, the database
 constraints (every illegal write attempted and confirmed refused), the ten goals against a running
 server, and a real browser driven through every write path. The browser suite is there because the
 first three never performed a single mutation *through the application*, which I did not notice for
@@ -97,16 +97,25 @@ tension with “do not load every task into the browser” and I would rather na
 
 ## Hosting
 
-**Not deployed yet.** Everything else is finished; this is the remaining task, and I would rather say
-so than claim a URL that does not work.
+**Vercel + Neon, in the same region.** The application and the database are co-located deliberately:
+almost every page here is two or three database round trips, and at 300ms a round trip — which is
+what it costs from my machine to Neon's US region — those same pages take over a second. Co-located
+they are tens of milliseconds.
 
-What is ready: no secrets in the repository (verified across all 32 commits), `.env.example`
-documents all three variables, migrations are committed and idempotent, and `npm run db:seed` is
-deterministic.
+**It should not sleep.** Vercel's functions wake on demand rather than idling, and Neon's free tier
+autosuspends after about five minutes of inactivity — so the very first request after a quiet period
+may take a couple of seconds while the database wakes. Every request after that is fast. If the first
+page load feels slow, that is the database waking, not a broken deployment.
 
-**Note for when it is live:** Neon’s free tier autosuspends after ~5 minutes idle, so the first
-request after a quiet period can take a few seconds. That is the database waking, not a broken
-deployment.
+**Verified against the live URL, not just locally.** The seventy-four goal checks were re-run against
+production with a real session cookie: all ten goals pass there, including the alert that returns
+when a due date changes (4 open → dismiss → 3 → change the date → 4 → change it back → 3). The
+anonymous checks pass too — every authenticated route answers 307 to the sign-in page and both API
+routes answer 401.
+
+No secrets are in the repository; `DATABASE_URL`, `AUTH_SECRET` and `BUSINESS_TIMEZONE` are set in
+Vercel's project settings, and the production signing secret is a different value from the one used
+locally.
 
 ## How much time did you actually spend?
 
